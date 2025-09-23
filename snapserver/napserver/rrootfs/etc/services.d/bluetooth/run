@@ -1,0 +1,20 @@
+#!/usr/bin/with-contenv bash
+# Starta Bluetooth och gör adaptern pairable/discoverable
+
+# Starta dbus
+if [ ! -e /var/run/dbus ]; then
+  mkdir -p /var/run/dbus
+fi
+dbus-daemon --system --fork
+
+# Starta bluetoothd i bakgrunden
+/usr/sbin/bluetoothd --noplugin=sap &
+
+# Vänta lite så att bluetoothd hinner starta
+sleep 2
+
+# Ställ in adaptern via bluetoothctl
+echo -e "power on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
+
+# Håll processen igång
+tail -f /dev/null
