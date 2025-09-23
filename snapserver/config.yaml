@@ -1,10 +1,10 @@
 ---
-name: snapcast-server
-version: dev
-slug: snapcastserver
-description: Create a snapcast server
-url: https://github.com/Art-Ev/addon-snapserver
-codenotary: arthur@evrard.dev
+name: Snapcast Server (Andreas fork)
+version: 0.1.0
+slug: snapcastserver_andreas
+description: "Fixed Snapcast server add-on with updated librespot and snapcast packages"
+url: https://github.com/AndreasNorefalk/hassio-addon-snapcast
+codenotary: andreasnorefalk@users.noreply.github.com
 arch:
   - aarch64
   - amd64
