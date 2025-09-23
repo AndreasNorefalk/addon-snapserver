@@ -1,22 +1,35 @@
 #!/usr/bin/with-contenv bash
 echo "[BT] Starting bluetoothd" > /proc/1/fd/1
 
-# Starta Bluetooth och gör adaptern pairable/discoverable
-
 # Starta dbus
 if [ ! -e /var/run/dbus ]; then
   mkdir -p /var/run/dbus
 fi
 dbus-daemon --system --fork
 
-# Starta bluetoothd i bakgrunden
+# Starta bluetoothd i bakgrunden (Alpine path)
 /usr/lib/bluetooth/bluetoothd --noplugin=sap &
 
 # Vänta lite så att bluetoothd hinner starta
 sleep 2
 
-# Ställ in adaptern via bluetoothctl
-echo -e "power on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
+# Funktion för att initiera första tillgängliga controller
+init_bt_controller() {
+  controller=$(hciconfig | grep -o '^hci[0-9]' | head -n1)
 
-# Håll processen igång
-tail -f /dev/null
+  if [ -n "$controller" ]; then
+    echo "[BT] Hittade Bluetooth-controller: $controller"
+    echo -e "select $controller\npower on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
+  else
+    echo "[BT] Ingen Bluetooth-controller hittades ännu"
+  fi
+}
+
+# Försök direkt vid start
+init_bt_controller
+
+# Loop för att hantera hotplug – kolla var 10:e sekund
+while true; do
+  sleep 10
+  init_bt_controller
+done
