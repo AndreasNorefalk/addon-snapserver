@@ -13,6 +13,13 @@ dbus-daemon --system --fork
 # Vänta lite så att bluetoothd hinner starta
 sleep 2
 
+
+# Skapa fifo för Snapcast om den inte redan finns
+if [ ! -p /tmp/snapfifo ]; then
+  mkfifo /tmp/snapfifo
+  echo "[BT] Created /tmp/snapfifo"
+fi
+
 # Leta efter första tillgängliga controller
 controller=$(bluetoothctl list | head -n1 | awk '{print $2}')
 
