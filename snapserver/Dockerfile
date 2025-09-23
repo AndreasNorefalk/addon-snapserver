@@ -11,8 +11,8 @@ RUN \
     && rm -fr \
         /tmp/*
         
-# Install Librespot
-RUN apk add --no-cache librespot
+# Install Librespot (latest from edge/testing)
+RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ librespot
 
 # Install Snapcast
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ snapcast-server
