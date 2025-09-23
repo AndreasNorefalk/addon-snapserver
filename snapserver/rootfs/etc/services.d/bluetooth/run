@@ -10,7 +10,7 @@ fi
 dbus-daemon --system --fork
 
 # Starta bluetoothd i bakgrunden
-/usr/sbin/bluetoothd --noplugin=sap &
+/usr/libexec/bluetooth/bluetoothd --noplugin=sap &
 
 # Vänta lite så att bluetoothd hinner starta
 sleep 2
