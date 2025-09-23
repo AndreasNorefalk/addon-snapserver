@@ -3,7 +3,7 @@ name: Snapcast Server (Andreas fork)
 version: 0.1.0
 slug: snapcastserver_andreas
 description: "Fixed Snapcast server add-on with updated librespot and snapcast packages"
-url: https://github.com/AndreasNorefalk/hassio-addon-snapcast
+url: https://github.com/AndreasNorefalk/addon-snapserver
 codenotary: andreasnorefalk@users.noreply.github.com
 arch:
   - aarch64
