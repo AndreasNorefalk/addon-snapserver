@@ -12,8 +12,7 @@ RUN \
         /tmp/*
  
 # Install Bluetooth + pulseaudio-bluetooth
-RUN apk add --no-cache bluez pulseaudio pulseaudio-bluez \
-    && rc-update add bluetooth default
+RUN apk add --no-cache bluez pulseaudio pulseaudio-bluez dbus
       
 # Install Librespot (latest from edge/testing)
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ librespot
