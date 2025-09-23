@@ -13,18 +13,16 @@ arch:
 host_network: true
 devices:
   - /dev/bus/usb:/dev/bus/usb
-privileged:
-  - NET_ADMIN
-  - SYS_ADMIN
+privileged: true
 startup: services   # Startar tidigt, innan appar
 boot: auto          # Startar automatiskt vid boot
 map: ["share:rw"]
 audio: true
-init: false
+init: true
 options:
   streams: |
     source = spotify:///librespot?name=Spotify&bitrate=320
-    pipe:///tmp/snapfifo?name=Bluetooth&sampleformat=44100:16:2
+    pipe:///tmp/snapfifo?name=Bluetooth&sampleformat=44100:16:2&type=pipe&mode=read
   buffer: 1000
   codec: "flac"
   send_to_muted: "false"
