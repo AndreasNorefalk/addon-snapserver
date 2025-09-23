@@ -1,4 +1,7 @@
 #!/usr/bin/with-contenv bash
+echo "[BT] Starting bluetoothd" > /proc/1/fd/1
+exec bluetoothd -n -d
+
 # Starta Bluetooth och gör adaptern pairable/discoverable
 
 # Starta dbus
