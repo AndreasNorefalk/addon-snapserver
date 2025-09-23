@@ -23,8 +23,14 @@ fi
 pulseaudio -D --exit-idle-time=-1 --system --disallow-exit --log-target=stderr
 sleep 2
 
-# Skapa en virtual sink som skriver till /tmp/snapfifo
-pactl load-module module-pipe-sink file=/tmp/snapfifo format=s16le rate=44100 channels=2 sink_name=bt2snap > /dev/null
+
+# Skapa en virtual sink (pipe) om den inte redan finns
+if ! pactl list short sinks | grep -q bt2snap; then
+  pactl load-module module-pipe-sink file=/tmp/snapfifo format=s16le rate=44100 channels=2 sink_name=bt2snap > /dev/null
+fi
+
+# Sätt bt2snap som default-sink så att Bluetooth-ljudet hamnar rätt
+pactl set-default-sink bt2snap
 
 # Leta efter första tillgängliga controller
 controller=$(bluetoothctl list | head -n1 | awk '{print $2}')
