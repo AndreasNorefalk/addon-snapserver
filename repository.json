@@ -1,5 +1,5 @@
 {
-  "name": "Snapserver addon for HAssOS",
-  "url": "https://github.com/Art-Ev/addon-snapserver/",
-  "maintainer": "Arthur Evrard"
+  "name": "AndreasNorefalk Snapcast Add-ons",
+  "url": "https://github.com/AndreasNorefalk/hassio-addon-snapcast",
+  "maintainer": "Andreas Norefalk <andreasnorefalk@users.noreply.github.com>"
 }
