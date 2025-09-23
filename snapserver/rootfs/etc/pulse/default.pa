@@ -1,0 +1,9 @@
+#!/usr/bin/pulseaudio -nF
+
+# Ladda Bluetooth-moduler
+load-module module-bluetooth-policy
+load-module module-bluetooth-discover
+
+# Skapa en virtuell sink för Snapcast
+load-module module-null-sink sink_name=bt_snapcast sink_properties=device.description="Bluetooth->Snapcast"
+load-module module-pipe-sink sink=bt_snapcast file=/tmp/snapfifo format=s16le rate=44100 channels=2
