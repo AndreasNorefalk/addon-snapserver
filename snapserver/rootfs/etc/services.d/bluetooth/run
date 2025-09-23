@@ -13,12 +13,18 @@ dbus-daemon --system --fork
 # Vänta lite så att bluetoothd hinner starta
 sleep 2
 
-
 # Skapa fifo för Snapcast om den inte redan finns
 if [ ! -p /tmp/snapfifo ]; then
   mkfifo /tmp/snapfifo
   echo "[BT] Created /tmp/snapfifo"
 fi
+
+# Starta pulseaudio om det inte redan rullar
+pulseaudio -D --exit-idle-time=-1 --system --disallow-exit --log-target=stderr
+sleep 2
+
+# Skapa en virtual sink som skriver till /tmp/snapfifo
+pactl load-module module-pipe-sink file=/tmp/snapfifo format=s16le rate=44100 channels=2 sink_name=bt2snap > /dev/null
 
 # Leta efter första tillgängliga controller
 controller=$(bluetoothctl list | head -n1 | awk '{print $2}')
