@@ -23,7 +23,7 @@ RUN apk add --no-cache \
 
 # Copy root filesystem with services
 COPY rootfs /
-RUN find /etc/s6-overlay/s6-rc.d -maxdepth 2 -type f -name run -exec chmod +x {} \;
+RUN find /etc/s6-overlay/s6-rc.d -maxdepth 2 -type f \( -name run -o -name up \) -exec chmod +x {} \;
 
 # Install Librespot (latest from edge/testing)
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ librespot
