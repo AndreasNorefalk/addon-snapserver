@@ -1,4 +1,8 @@
 #!/command/with-contenv bashio
 
 bashio::log.info "[dmesg] Reducing kernel console verbosity"
-exec dmesg -n 1
+if ! dmesg -n 1; then
+    bashio::log.warning "[dmesg] Unable to adjust kernel console verbosity"
+fi
+
+exit 0
