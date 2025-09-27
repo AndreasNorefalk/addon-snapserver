@@ -8,6 +8,72 @@ if [[ ! -p /tmp/snapfifo ]]; then
     mkfifo /tmp/snapfifo
 fi
 
+configure_audio_stack() {
+    local attempt
+    local controller
+    local pa_ready=false
+
+    export PULSE_RUNTIME_PATH="/var/run/pulse"
+    export XDG_RUNTIME_DIR="/var/run/pulse"
+
+    bashio::log.info "[Setup] Waiting for PulseAudio to become available"
+    for attempt in $(seq 1 50); do
+        if /command/s6-setuidgid pulse pactl info &>/dev/null; then
+            pa_ready=true
+            break
+        fi
+        sleep 0.2
+    done
+
+    if [[ "${pa_ready}" != true ]]; then
+        bashio::log.warning "[Setup] PulseAudio did not become ready within the expected time"
+    else
+        if ! /command/s6-setuidgid pulse pactl list short sinks | grep -q "\\<bt_snapcast\\>"; then
+            /command/s6-setuidgid pulse pactl load-module module-null-sink \\
+                sink_name=bt_snapcast \\
+                sink_properties=device.description="Bluetooth->Snapcast" || \\
+                bashio::log.warning "[Setup] Failed to load module-null-sink"
+
+            /command/s6-setuidgid pulse pactl load-module module-pipe-sink \\
+                sink=bt_snapcast \\
+                file=/tmp/snapfifo \\
+                format=s16le \\
+                rate=44100 \\
+                channels=2 || \\
+                bashio::log.warning "[Setup] Failed to load module-pipe-sink"
+        fi
+
+        if ! /command/s6-setuidgid pulse pactl set-default-sink bt_snapcast; then
+            bashio::log.warning "[Setup] Unable to set bt_snapcast as the default PulseAudio sink"
+        fi
+    fi
+
+    bashio::log.info "[Setup] Waiting for Bluetooth controller"
+    controller=""
+    for attempt in $(seq 1 40); do
+        controller=$(bluetoothctl --timeout 1 list | head -n1 | awk '{print $2}')
+        [[ -n "${controller}" ]] && break
+        sleep 0.5
+    done
+
+    if [[ -n "${controller}" ]]; then
+        bashio::log.info "[BT] Found controller: ${controller}"
+        if ! bluetoothctl --timeout 5 <<EOF
+select ${controller}
+power on
+agent on
+default-agent
+pairable on
+discoverable on
+EOF
+        then
+            bashio::log.warning "[BT] Unable to configure Bluetooth controller ${controller}"
+        fi
+    else
+        bashio::log.warning "[BT] No Bluetooth controller detected"
+    fi
+}
+
 shopt -s extglob
 
 declare streams
@@ -116,6 +182,9 @@ echo "initial_volume = ${initial_volume}" >> "${config}"
 # Start SnapServer and post-process its output so the timestamps are refreshed on
 # every log line.  Using a regular pipeline keeps the shell alive which allows us
 # to capture the exit status cleanly via PIPESTATUS when the daemon stops.
+configure_audio_stack &
+setup_pid=$!
+
 bashio::log.info "Starting SnapServer... (log reset)"
 
 snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
@@ -128,4 +197,7 @@ snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
     fflush()
   }'
 
-exit "${PIPESTATUS[0]}"
+snapserver_exit=${PIPESTATUS[0]}
+wait "${setup_pid}" 2>/dev/null || true
+
+exit "${snapserver_exit}"

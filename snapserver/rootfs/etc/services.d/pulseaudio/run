@@ -3,6 +3,14 @@
 bashio::log.info "[PA] Preparing runtime directories"
 mkdir -p /var/run/pulse/.config/pulse
 mkdir -p /run/pulse
+mkdir -p /etc/pulse/system.pa.d
+
+if [[ ! -f /var/run/pulse/.config/pulse/cookie ]]; then
+    head -c 256 /dev/urandom > /var/run/pulse/.config/pulse/cookie || true
+fi
+
+ln -sf /var/run/pulse/.config/pulse/cookie /var/run/pulse/.pulse-cookie
+
 chown -R pulse:pulse /var/run/pulse /run/pulse || true
 
 export PULSE_RUNTIME_PATH="/var/run/pulse"
