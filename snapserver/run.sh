@@ -1,4 +1,9 @@
-#!/command/with-contenv bashio
+#!/command/with-contenv bash
+# shellcheck shell=bash
+
+# Load Bashio for logging helpers and Supervisor integration.
+# shellcheck disable=SC1091
+source /usr/lib/bashio.sh
 
 mkdir -p /share/snapfifo
 mkdir -p /share/snapcast
