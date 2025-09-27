@@ -1,16 +1,23 @@
 #!/command/with-contenv bashio
 sleep 2
-if ! pactl list short sinks | grep -q bt2snap; then
-  pactl load-module module-pipe-sink file=/tmp/snapfifo format=s16le rate=44100 channels=2 sink_name=bt2snap
+
+if [ ! -p /tmp/snapfifo ]; then
+  mkfifo /tmp/snapfifo
 fi
-pactl set-default-sink bt2snap
+
+if ! pactl list short sinks | grep -q bt_snapcast; then
+  pactl load-module module-null-sink sink_name=bt_snapcast sink_properties=device.description="Bluetooth->Snapcast"
+  pactl load-module module-pipe-sink sink=bt_snapcast file=/tmp/snapfifo format=s16le rate=44100 channels=2
+fi
+
+pactl set-default-sink bt_snapcast
 
 controller=$(bluetoothctl list | head -n1 | awk '{print $2}')
 if [ -n "$controller" ]; then
-  bashio::log.info "[BT] Hittade controller: $controller"
+  bashio::log.info "[BT] Found controller: $controller"
   echo -e "select $controller\npower on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
 else
-  bashio::log.warning "[BT] Ingen Bluetooth-controller hittades ännu"
+  bashio::log.warning "[BT] No Bluetooth controller detected yet"
 fi
 
 # Viktigt: håll inte processen vid liv, exit direkt

@@ -1,7 +1,7 @@
 # Home Assistant Community Add-on: Snapcast
 
 <p align="center">
-  <a href=""><img src="https://img.shields.io/badge/version-2024.11-blue" /></a>
+  <a href=""><img src="https://img.shields.io/badge/version-2024.12-blue" /></a>
   <a href=""><img src="https://img.shields.io/badge/project-experimental-yellow" /></a>
   <a href="https://github.com/Art-Ev/addon-snapserver/blob/main/LICENSE.md"> <img src="https://img.shields.io/badge/licence-mit-green" /></a>
 </p>
@@ -12,15 +12,33 @@ This Home Assistant add-on bundles a [Snapserver](https://github.com/badaix/snap
 that can be managed directly from your Home Assistant installation. Snapserver is the
 central component of the Snapcast ecosystem and is responsible for receiving audio from
 one or more sources and distributing perfectly synchronized streams to Snapclient
-players around your home. With this add-on you can:
+players around your home. The add-on configures PulseAudio, Bluetooth, Librespot, and
+Snapweb automatically so you can focus on selecting the audio sources you want to share.
+With this add-on you can:
 
 * Provide a multi-room audio backbone that keeps every speaker in sync.
 * Combine multiple audio inputs, such as Spotify via Librespot or a Bluetooth source,
-  and make them available to any Snapclient.
+  and make them available to any Snapclient. The add-on automatically exposes a
+  Bluetooth sink that forwards audio into Snapserver via a FIFO pipe.
 * Configure buffering, codecs, and transport protocols (TCP/HTTP) through the add-on
   options panel without leaving the Home Assistant UI.
 * Take advantage of the included Snapweb interface that lets you manage streams and
   client volumes from any browser.
+
+## Configuration
+
+The `streams` option accepts one URI per line. The add-on automatically prefixes each
+line with `source =` when rendering `snapserver.conf`, so both of the examples below are
+valid:
+
+```
+streams: |
+  spotify:///librespot?name=Spotify&bitrate=320
+  pipe:///tmp/snapfifo?name=Bluetooth&sampleformat=44100:16:2&type=pipe&mode=read
+```
+
+You can still provide fully formed `source = ...` statements if you prefer. Additional
+sources can be supplied via `stream_bis` and `stream_ter`.
 
 Running Snapserver as an add-on means it benefits from Home Assistant's lifecycle
 management: it starts automatically with your system, integrates into Supervisor
