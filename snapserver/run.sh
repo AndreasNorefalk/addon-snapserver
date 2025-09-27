@@ -47,7 +47,7 @@ codec=$(bashio::config 'codec')
 echo "codec = ${codec}" >> "${config}"
 # Muted
 muted=$(bashio::config 'send_to_muted')
-echo "send_to_muted = = ${muted}" >> "${config}"
+echo "send_to_muted = ${muted}" >> "${config}"
 # Sampleformat
 sampleformat=$(bashio::config 'sampleformat')
 echo "sampleformat = ${sampleformat}" >> "${config}"
@@ -81,7 +81,7 @@ echo "[streaming_client]" >> "${config}"
 initial_volume=$(bashio::config 'initial_volume')
 echo "initial_volume = ${initial_volume}" >> "${config}"
 
-basho::log.info "Starting SnapServer... (log reset)"
+bashio::log.info "Starting SnapServer... (log reset)"
 exec snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
   BEGIN { print "[" dts "] [LOG RESET] ------------------------" }
   {
