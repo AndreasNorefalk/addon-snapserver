@@ -4,5 +4,3 @@ bashio::log.info "[dmesg] Reducing kernel console verbosity"
 if ! dmesg -n 1 &>/dev/null; then
     bashio::log.warning "[dmesg] Unable to adjust kernel console verbosity"
 fi
-
-exit 0
