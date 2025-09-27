@@ -14,10 +14,10 @@ RUN \
 # Install Bluetooth + pulseaudio-bluetooth
 RUN apk add --no-cache bluez pulseaudio pulseaudio-bluez dbus
 
-# Copy Bluetooth service script
-COPY rootfs/etc/services.d/bluetooth/run /etc/services.d/bluetooth/run
-RUN chmod +x /etc/services.d/bluetooth/run
-      
+# Copy entire services.d (all services)
+COPY rootfs/etc/services.d/ /etc/services.d/
+RUN chmod +x /etc/services.d/*/run
+
 # Install Librespot (latest from edge/testing)
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ librespot
 
