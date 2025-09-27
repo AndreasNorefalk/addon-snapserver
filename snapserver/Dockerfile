@@ -10,9 +10,9 @@ RUN \
         pulseaudio alsa-plugins-pulse bash \
     && rm -fr \
         /tmp/*
- 
+
 # Install Bluetooth + pulseaudio-bluetooth
-RUN apk add --no-cache bluez pulseaudio pulseaudio-bluez dbus
+RUN apk add --no-cache bluez pulseaudio pulseaudio-bluez pulseaudio-utils dbus
 
 # Copy entire services.d (all services)
 COPY rootfs/etc/services.d/ /etc/services.d/
