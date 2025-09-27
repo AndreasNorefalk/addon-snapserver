@@ -16,8 +16,8 @@ devices:
 privileged:
   - NET_ADMIN
   - SYS_ADMIN
-startup: services   # Startar tidigt, innan appar
-boot: auto          # Startar automatiskt vid boot
+startup: services   # Starts early, before apps
+boot: auto          # Starts automatically at boot
 map: ["share:rw"]
 audio: true
 init: true
