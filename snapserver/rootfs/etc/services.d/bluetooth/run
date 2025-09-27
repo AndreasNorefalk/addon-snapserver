@@ -5,7 +5,10 @@ echo "[BT] Starting bluetoothd" > /proc/1/fd/1
 if [ ! -e /var/run/dbus ]; then
   mkdir -p /var/run/dbus
 fi
-dbus-daemon --system --fork
+
+# Starta dbus i bakgrunden (utan fork)
+dbus-daemon --system --nofork --nopidfile --nosyslog &
+sleep 1
 
 # Starta bluetoothd i bakgrunden
 /usr/lib/bluetooth/bluetoothd --noplugin=sap &
@@ -19,10 +22,9 @@ if [ ! -p /tmp/snapfifo ]; then
   echo "[BT] Created /tmp/snapfifo"
 fi
 
-# Starta pulseaudio om det inte redan rullar
-pulseaudio -D --exit-idle-time=-1 --system --disallow-exit --log-target=stderr
+# Starta pulseaudio i bakgrunden (utan -D)
+pulseaudio --exit-idle-time=-1 --system --disallow-exit --log-target=stderr &
 sleep 2
-
 
 # Skapa en virtual sink (pipe) om den inte redan finns
 if ! pactl list short sinks | grep -q bt2snap; then
