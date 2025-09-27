@@ -1,0 +1,17 @@
+#!/usr/bin/with-contenv bash
+sleep 2
+if ! pactl list short sinks | grep -q bt2snap; then
+  pactl load-module module-pipe-sink file=/tmp/snapfifo format=s16le rate=44100 channels=2 sink_name=bt2snap
+fi
+pactl set-default-sink bt2snap
+
+controller=$(bluetoothctl list | head -n1 | awk '{print $2}')
+if [ -n "$controller" ]; then
+  echo "[BT] Hittade controller: $controller"
+  echo -e "select $controller\npower on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
+else
+  echo "[BT] Ingen Bluetooth-controller hittades ännu"
+fi
+
+# Viktigt: håll inte processen vid liv, exit direkt
+exit 0
