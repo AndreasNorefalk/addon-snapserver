@@ -20,5 +20,5 @@ else
   bashio::log.warning "[BT] No Bluetooth controller detected yet"
 fi
 
-# Viktigt: håll inte processen vid liv, exit direkt
+# Important: do not keep the process alive, exit immediately
 exit 0
