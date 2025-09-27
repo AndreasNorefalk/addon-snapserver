@@ -81,5 +81,13 @@ echo "[streaming_client]" >> "${config}"
 initial_volume=$(bashio::config 'initial_volume')
 echo "initial_volume = ${initial_volume}" >> "${config}"
 
-bashio::log.info "Starting SnapServer..."
-exec snapserver
+basho::log.info "Starting SnapServer... (log reset)"
+exec snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
+  BEGIN { print "[" dts "] [LOG RESET] ------------------------" }
+  {
+    cmd="date +\"%Y-%m-%d %H:%M:%S\""
+    cmd | getline t
+    close(cmd)
+    print "[" t "] " $0
+    fflush()
+  }'
