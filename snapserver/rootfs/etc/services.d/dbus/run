@@ -1,4 +1,7 @@
-#!/command/execlineb -P
-/command/with-contenv
-dbus-daemon --system --nofork --nopidfile --nosyslog
+#!/command/with-contenv bashio
 
+bashio::log.info "[DBUS] Preparing runtime directory"
+mkdir -p /run/dbus
+
+bashio::log.info "[DBUS] Starting system bus"
+exec dbus-daemon --system --nofork --nopidfile --nosyslog
