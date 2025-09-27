@@ -8,13 +8,21 @@ if [[ ! -p /tmp/snapfifo ]]; then
     mkfifo /tmp/snapfifo
 fi
 
+# Export environment variables that make PulseAudio and pactl behave in a
+# predictable headless manner.
+mkdir -p /var/run/pulse/.config/pulse
+export PULSE_RUNTIME_PATH="/var/run/pulse"
+export XDG_RUNTIME_DIR="/var/run/pulse"
+export HOME="/var/run/pulse"
+export XDG_CONFIG_HOME="/var/run/pulse/.config"
+export PULSE_COOKIE="/var/run/pulse/.config/pulse/cookie"
+export DBUS_SYSTEM_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SYSTEM_BUS_ADDRESS}"
+
 configure_audio_stack() {
     local attempt
     local controller
     local pa_ready=false
-
-    export PULSE_RUNTIME_PATH="/var/run/pulse"
-    export XDG_RUNTIME_DIR="/var/run/pulse"
 
     bashio::log.info "[Setup] Waiting for PulseAudio to become available"
     for attempt in $(seq 1 50); do

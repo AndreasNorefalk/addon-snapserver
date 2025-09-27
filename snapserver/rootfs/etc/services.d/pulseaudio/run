@@ -11,12 +11,17 @@ fi
 
 ln -sf /var/run/pulse/.config/pulse/cookie /var/run/pulse/.pulse-cookie
 
+chmod 600 /var/run/pulse/.config/pulse/cookie /var/run/pulse/.pulse-cookie 2>/dev/null || true
+
 chown -R pulse:pulse /var/run/pulse /run/pulse || true
 
 export PULSE_RUNTIME_PATH="/var/run/pulse"
 export XDG_RUNTIME_DIR="/var/run/pulse"
 export HOME="/var/run/pulse"
 export XDG_CONFIG_HOME="/var/run/pulse/.config"
+export PULSE_COOKIE="/var/run/pulse/.config/pulse/cookie"
+export DBUS_SYSTEM_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
+export DBUS_SESSION_BUS_ADDRESS="${DBUS_SYSTEM_BUS_ADDRESS}"
 
 bashio::log.info "[PA] Waiting for system bus"
 for _ in $(seq 1 50); do
