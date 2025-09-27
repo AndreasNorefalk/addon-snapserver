@@ -6,6 +6,27 @@
   <a href="https://github.com/Art-Ev/addon-snapserver/blob/main/LICENSE.md"> <img src="https://img.shields.io/badge/licence-mit-green" /></a>
 </p>
 
+## About this add-on
+
+This Home Assistant add-on bundles a [Snapserver](https://github.com/badaix/snapcast) instance
+that can be managed directly from your Home Assistant installation. Snapserver is the
+central component of the Snapcast ecosystem and is responsible for receiving audio from
+one or more sources and distributing perfectly synchronized streams to Snapclient
+players around your home. With this add-on you can:
+
+* Provide a multi-room audio backbone that keeps every speaker in sync.
+* Combine multiple audio inputs, such as Spotify via Librespot or a Bluetooth source,
+  and make them available to any Snapclient.
+* Configure buffering, codecs, and transport protocols (TCP/HTTP) through the add-on
+  options panel without leaving the Home Assistant UI.
+* Take advantage of the included Snapweb interface that lets you manage streams and
+  client volumes from any browser.
+
+Running Snapserver as an add-on means it benefits from Home Assistant's lifecycle
+management: it starts automatically with your system, integrates into Supervisor
+backups, and exposes the necessary ports and devices so you can attach USB audio
+interfaces or Bluetooth adapters when needed.
+
 ## Contributing
 
 This is an active open-source project. Totally to people who want to
