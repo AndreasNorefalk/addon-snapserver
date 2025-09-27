@@ -1,4 +1,16 @@
 #!/command/with-contenv bashio
 
+bashio::log.info "[Avahi] Waiting for system bus"
+for _ in $(seq 1 50); do
+    if [[ -S /var/run/dbus/system_bus_socket ]]; then
+        break
+    fi
+    sleep 0.1
+done
+
+if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
+    bashio::log.warning "[Avahi] system bus socket not available after waiting"
+fi
+
 bashio::log.info "[Avahi] Starting avahi-daemon"
-exec avahi-daemon --no-chroot --daemonize=false
+exec avahi-daemon --no-chroot --no-daemon

@@ -5,6 +5,18 @@ mkdir -p /var/run/pulse/.config/pulse
 mkdir -p /run/pulse
 chown -R pulse:pulse /var/run/pulse /run/pulse || true
 
+bashio::log.info "[PA] Waiting for system bus"
+for _ in $(seq 1 50); do
+    if [[ -S /var/run/dbus/system_bus_socket ]]; then
+        break
+    fi
+    sleep 0.1
+done
+
+if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
+    bashio::log.warning "[PA] system bus socket not available after waiting"
+fi
+
 bashio::log.info "[PA] Starting PulseAudio"
 exec pulseaudio --exit-idle-time=-1 --system --disallow-exit --disallow-module-loading \
     --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
