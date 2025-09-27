@@ -2,6 +2,7 @@
 
 bashio::log.info "[DBUS] Preparing runtime directory"
 mkdir -p /run/dbus
+ln -s /run/dbus /var/run/dbus 2>/dev/null || true
 
 bashio::log.info "[DBUS] Starting system bus"
 exec dbus-daemon --system --nofork --nopidfile --nosyslog

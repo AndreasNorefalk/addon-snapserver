@@ -1,4 +1,10 @@
-#!/command/execlineb -P
-/command/with-contenv
-pulseaudio --exit-idle-time=-1 --system --disallow-exit --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
+#!/command/with-contenv bashio
 
+bashio::log.info "[PA] Preparing runtime directories"
+mkdir -p /var/run/pulse/.config/pulse
+mkdir -p /run/pulse
+chown -R pulse:pulse /var/run/pulse /run/pulse || true
+
+bashio::log.info "[PA] Starting PulseAudio"
+exec pulseaudio --exit-idle-time=-1 --system --disallow-exit --disallow-module-loading \
+    --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa

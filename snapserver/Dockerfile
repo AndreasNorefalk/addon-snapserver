@@ -11,8 +11,15 @@ RUN \
     && rm -fr \
         /tmp/*
 
-# Install Bluetooth + pulseaudio-bluetooth
-RUN apk add --no-cache bluez pulseaudio pulseaudio-bluez pulseaudio-utils dbus
+# Install Bluetooth, Avahi, and supporting tools
+RUN apk add --no-cache \
+        bluez \
+        pulseaudio \
+        pulseaudio-bluez \
+        pulseaudio-utils \
+        dbus \
+        avahi \
+        avahi-tools
 
 # Copy entire services.d (all services)
 COPY rootfs/etc/services.d/ /etc/services.d/
