@@ -1,4 +1,4 @@
-#!/usr/bin/env bashio
+#!/command/with-contenv bashio
 
 mkdir -p /share/snapfifo
 mkdir -p /share/snapcast
@@ -22,6 +22,10 @@ if ! bashio::fs.file_exists '/etc/snapserver.conf'; then
     touch /etc/snapserver.conf ||
         bashio::exit.nok "Could not create snapserver.conf file on filesystem"
 fi
+# Emit a clear marker so every start of the add-on is easy to spot in the
+# Supervisor logs.
+bashio::log.notice "---------- SnapServer add-on starting: $(date '+%Y-%m-%d %H:%M:%S') ----------"
+
 bashio::log.info "Populating snapserver.conf..."
 
 echo "[stream]" > "${config}"
@@ -81,8 +85,12 @@ echo "[streaming_client]" >> "${config}"
 initial_volume=$(bashio::config 'initial_volume')
 echo "initial_volume = ${initial_volume}" >> "${config}"
 
+# Start SnapServer and post-process its output so the timestamps are refreshed on
+# every log line.  Using a regular pipeline keeps the shell alive which allows us
+# to capture the exit status cleanly via PIPESTATUS when the daemon stops.
 bashio::log.info "Starting SnapServer... (log reset)"
-exec snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
+
+snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
   BEGIN { print "[" dts "] [LOG RESET] ------------------------" }
   {
     cmd="date +\"%Y-%m-%d %H:%M:%S\""
@@ -91,3 +99,5 @@ exec snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
     print "[" t "] " $0
     fflush()
   }'
+
+exit "${PIPESTATUS[0]}"
