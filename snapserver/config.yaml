@@ -1,6 +1,6 @@
 ---
 name: Snapcast Server (Andreas fork)
-version: 0.1.24
+version: 0.1.25
 slug: snapcastserver_andreas
 description: "Snapcast server with bluetooth input"
 url: https://github.com/AndreasNorefalk/addon-snapserver
@@ -23,7 +23,7 @@ audio: true
 init: true
 options:
   streams: |
-    source = spotify:///librespot?name=Spotify&bitrate=320
+    spotify:///librespot?name=Spotify&bitrate=320
     pipe:///tmp/snapfifo?name=Bluetooth&sampleformat=44100:16:2&type=pipe&mode=read
   buffer: 1000
   codec: "flac"

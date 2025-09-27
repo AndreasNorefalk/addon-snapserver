@@ -3,6 +3,13 @@
 mkdir -p /share/snapfifo
 mkdir -p /share/snapcast
 
+# Ensure that the FIFO used by PulseAudio exists so Snapserver can attach to it.
+if [[ ! -p /tmp/snapfifo ]]; then
+    mkfifo /tmp/snapfifo
+fi
+
+shopt -s extglob
+
 declare streams
 declare stream_bis
 declare stream_ter
@@ -29,18 +36,39 @@ bashio::log.notice "---------- SnapServer add-on starting: $(date '+%Y-%m-%d %H:
 bashio::log.info "Populating snapserver.conf..."
 
 echo "[stream]" > "${config}"
-# Streams
-streams=$(bashio::config 'streams')
-echo "${streams}" >> "${config}"
 
-# Stream bis and ter
+sanitize_streams() {
+    local raw_streams="$1"
+    local stream
+
+    while IFS= read -r stream || [[ -n "${stream}" ]]; do
+        # Trim leading/trailing whitespace
+        stream="${stream##+([[:space:]])}"
+        stream="${stream%%+([[:space:]])}"
+
+        [[ -z "${stream}" ]] && continue
+
+        if [[ "${stream,,}" == null ]]; then
+            continue
+        fi
+
+        if [[ "${stream}" != source\ =* ]]; then
+            stream="source = ${stream}"
+        fi
+
+        echo "${stream}" >> "${config}"
+    done <<< "${raw_streams}"
+}
+
+# Streams
+sanitize_streams "$(bashio::config 'streams')"
+
+# Optional additional streams
 if bashio::config.has_value 'stream_bis'; then
-    stream_bis=$(bashio::config 'stream_bis')
-    echo "${stream_bis}" >> "${config}"
+    sanitize_streams "$(bashio::config 'stream_bis')"
 fi
 if bashio::config.has_value 'stream_ter'; then
-    stream_ter=$(bashio::config 'stream_ter')
-    echo "${stream_ter}" >> "${config}"
+    sanitize_streams "$(bashio::config 'stream_ter')"
 fi
 
 # Buffer
