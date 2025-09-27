@@ -1,0 +1,3 @@
+#!/usr/bin/with-contenv bash
+# Disable kernel logs to console
+exec dmesg --console-off
