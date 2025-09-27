@@ -1,4 +1,4 @@
-#!/usr/bin/with-contenv bash
+#!/command/with-contenv bash
 sleep 2
 if ! pactl list short sinks | grep -q bt2snap; then
   pactl load-module module-pipe-sink file=/tmp/snapfifo format=s16le rate=44100 channels=2 sink_name=bt2snap
