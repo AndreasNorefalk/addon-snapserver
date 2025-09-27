@@ -13,4 +13,4 @@ if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
 fi
 
 bashio::log.info "[Avahi] Starting avahi-daemon"
-exec avahi-daemon --no-chroot --no-daemon
+exec avahi-daemon --no-chroot

@@ -7,6 +7,8 @@ chown -R pulse:pulse /var/run/pulse /run/pulse || true
 
 export PULSE_RUNTIME_PATH="/var/run/pulse"
 export XDG_RUNTIME_DIR="/var/run/pulse"
+export HOME="/var/run/pulse"
+export XDG_CONFIG_HOME="/var/run/pulse/.config"
 
 bashio::log.info "[PA] Waiting for system bus"
 for _ in $(seq 1 50); do
