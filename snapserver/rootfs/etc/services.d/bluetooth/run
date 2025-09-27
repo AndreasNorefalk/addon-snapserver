@@ -18,7 +18,15 @@ if pidof bluetoothd >/dev/null 2>&1; then
     exec tail -f /dev/null
 fi
 
-cmd=(/usr/lib/bluetooth/bluetoothd --noplugin=sap --nodetach)
+if [[ ! -d /sys/class/bluetooth ]] || ! compgen -G '/sys/class/bluetooth/hci*' >/dev/null; then
+    bashio::log.warning "[BT] No Bluetooth kernel interfaces detected. Skipping internal daemon startup."
+    exec tail -f /dev/null
+fi
+
+disabled_plugins=(sap bap bass mcp vcp micp ccp csip)
+plugin_arg="$(IFS=,; echo "${disabled_plugins[*]}")"
+
+cmd=(/usr/lib/bluetooth/bluetoothd --nodetach --noplugin="${plugin_arg}")
 "${cmd[@]}" &
 bt_pid=$!
 
@@ -35,7 +43,7 @@ fi
 terminate() {
     local sig=${1:-TERM}
     if kill -0 "${bt_pid}" 2>/dev/null; then
-        kill "-${sig}" "${bt_pid}"
+        kill -s "${sig}" "${bt_pid}"
     fi
 }
 

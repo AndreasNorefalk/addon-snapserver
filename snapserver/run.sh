@@ -48,13 +48,29 @@ configure_audio_stack() {
         fi
     fi
 
-    bashio::log.info "[Setup] Waiting for Bluetooth controller"
-    controller=""
-    for attempt in $(seq 1 40); do
-        controller=$(bluetoothctl --timeout 1 list | head -n1 | awk '{print $2}')
-        [[ -n "${controller}" ]] && break
-        sleep 0.5
-    done
+    if ! command -v bluetoothctl >/dev/null 2>&1; then
+        bashio::log.warning "[BT] bluetoothctl not found; skipping Bluetooth controller configuration"
+        controller=""
+    else
+        bashio::log.info "[Setup] Waiting for Bluetooth controller"
+        controller=""
+        local bluetooth_ready=false
+        local bluetooth_output=""
+
+        for attempt in $(seq 1 40); do
+            if bluetooth_output=$(bluetoothctl --timeout 1 list 2>/dev/null); then
+                bluetooth_ready=true
+                controller=$(awk 'NR==1 {print $2}' <<<"${bluetooth_output}")
+                [[ -n "${controller}" ]] && break
+            fi
+            sleep 0.5
+        done
+
+        if [[ "${bluetooth_ready}" != true ]]; then
+            bashio::log.warning "[BT] Unable to communicate with bluetoothd; skipping controller configuration"
+            controller=""
+        fi
+    fi
 
     if [[ -n "${controller}" ]]; then
         bashio::log.info "[BT] Found controller: ${controller}"
