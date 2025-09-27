@@ -21,9 +21,9 @@ RUN apk add --no-cache \
         avahi \
         avahi-tools
 
-# Copy entire services.d (all services)
-COPY rootfs/etc/services.d/ /etc/services.d/
-RUN chmod +x /etc/services.d/*/run
+# Copy root filesystem with services
+COPY rootfs /
+RUN find /etc/s6-overlay/s6-rc.d -maxdepth 2 -type f -name run -exec chmod +x {} \;
 
 # Install Librespot (latest from edge/testing)
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ librespot
