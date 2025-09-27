@@ -13,4 +13,9 @@ if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
 fi
 
 bashio::log.info "[BT] Starting bluetoothd"
+if pidof bluetoothd >/dev/null 2>&1; then
+    bashio::log.warning "[BT] Detected an existing bluetoothd process on the host. Skipping internal daemon startup."
+    exec tail -f /dev/null
+fi
+
 exec /usr/lib/bluetooth/bluetoothd --noplugin=sap --nodetach

@@ -1,23 +1,38 @@
 #!/command/with-contenv bashio
+
 sleep 2
 
-if [ ! -p /tmp/snapfifo ]; then
-  mkfifo /tmp/snapfifo
+export PULSE_RUNTIME_PATH="/var/run/pulse"
+export XDG_RUNTIME_DIR="/var/run/pulse"
+
+if [[ ! -p /tmp/snapfifo ]]; then
+    mkfifo /tmp/snapfifo
 fi
 
-if ! pactl list short sinks | grep -q bt_snapcast; then
-  pactl load-module module-null-sink sink_name=bt_snapcast sink_properties=device.description="Bluetooth->Snapcast"
-  pactl load-module module-pipe-sink sink=bt_snapcast file=/tmp/snapfifo format=s16le rate=44100 channels=2
+run_pactl() {
+    /command/s6-setuidgid pulse pactl "$@"
+}
+
+if ! run_pactl list short sinks | grep -q bt_snapcast; then
+    run_pactl load-module module-null-sink \
+        sink_name=bt_snapcast \
+        sink_properties=device.description="Bluetooth->Snapcast"
+    run_pactl load-module module-pipe-sink \
+        sink=bt_snapcast \
+        file=/tmp/snapfifo \
+        format=s16le \
+        rate=44100 \
+        channels=2
 fi
 
-pactl set-default-sink bt_snapcast
+run_pactl set-default-sink bt_snapcast
 
 controller=$(bluetoothctl list | head -n1 | awk '{print $2}')
-if [ -n "$controller" ]; then
-  bashio::log.info "[BT] Found controller: $controller"
-  echo -e "select $controller\npower on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
+if [[ -n "${controller}" ]]; then
+    bashio::log.info "[BT] Found controller: ${controller}"
+    echo -e "select ${controller}\npower on\nagent on\ndefault-agent\npairable on\ndiscoverable on" | bluetoothctl
 else
-  bashio::log.warning "[BT] No Bluetooth controller detected yet"
+    bashio::log.warning "[BT] No Bluetooth controller detected yet"
 fi
 
 # Important: do not keep the process alive, exit immediately
