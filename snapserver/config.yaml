@@ -1,6 +1,6 @@
 ---
 name: Snapcast Server (Andreas fork)
-version: 0.1.26
+version: 0.1.27
 slug: snapcastserver_andreas
 description: "Snapcast server with bluetooth input"
 url: https://github.com/AndreasNorefalk/addon-snapserver
@@ -20,7 +20,7 @@ startup: services   # Starts early, before apps
 boot: auto          # Starts automatically at boot
 map: ["share:rw"]
 audio: true
-init: true
+init: false
 options:
   streams: |
     spotify:///librespot?name=Spotify&bitrate=320
