@@ -1,3 +1,4 @@
-#!/usr/bin/execlineb -P
-with-contenv
+#!/command/execlineb -P
+/command/with-contenv
 pulseaudio --exit-idle-time=-1 --system --disallow-exit --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
+
