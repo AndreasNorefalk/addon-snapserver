@@ -1,0 +1,3 @@
+#!/command/with-contenv sh
+
+printf '%s\n' "[legacy] Skipping deprecated legacy service supervision"
