@@ -1,9 +1,80 @@
 #!/command/with-contenv bash
 # shellcheck shell=bash
 
-# Load Bashio for logging helpers and Supervisor integration.
-# shellcheck disable=SC1091
-source /usr/lib/bashio.sh
+# Lightweight helpers to replace the Bashio dependency that disappeared from
+# the base image.  The add-on configuration provided by the Supervisor is
+# available as JSON in /data/options.json.
+CONFIG_PATH="/data/options.json"
+
+log() {
+    local level="$1"
+    shift
+    printf '[%s] %s\n' "${level}" "$*"
+}
+
+log_info() {
+    log "INFO" "$@"
+}
+
+log_warning() {
+    log "WARN" "$@"
+}
+
+log_notice() {
+    log "NOTICE" "$@"
+}
+
+exit_nok() {
+    log "ERROR" "$@"
+    exit 1
+}
+
+config_get_raw() {
+    local key="$1"
+    if [[ ! -f "${CONFIG_PATH}" ]]; then
+        return 1
+    fi
+    jq -er --arg key "${key}" '.[$key]' "${CONFIG_PATH}" 2>/dev/null
+}
+
+config_get() {
+    local key="$1"
+    local default_value="${2-}"
+    local value
+
+    if ! value=$(config_get_raw "${key}"); then
+        if [[ $# -ge 2 ]]; then
+            printf '%s' "${default_value}"
+            return 0
+        fi
+        return 1
+    fi
+
+    # jq prints "null" for null values; treat that as missing.
+    if [[ "${value}" == "null" ]]; then
+        if [[ $# -ge 2 ]]; then
+            printf '%s' "${default_value}"
+            return 0
+        fi
+        return 1
+    fi
+
+    printf '%s' "${value}"
+}
+
+config_has_value() {
+    local key="$1"
+    local value
+    if value=$(config_get_raw "${key}"); then
+        [[ -n "${value}" && "${value}" != "null" ]]
+    else
+        return 1
+    fi
+}
+
+if [[ ! -f "${CONFIG_PATH}" ]]; then
+    exit_nok "Configuration file ${CONFIG_PATH} not found"
+fi
 
 mkdir -p /share/snapfifo
 mkdir -p /share/snapcast
@@ -29,7 +100,7 @@ configure_audio_stack() {
     local controller
     local pa_ready=false
 
-    bashio::log.info "[Setup] Waiting for PulseAudio to become available"
+    log_info "[Setup] Waiting for PulseAudio to become available"
     for attempt in $(seq 1 50); do
         if /command/s6-setuidgid pulse pactl info &>/dev/null; then
             pa_ready=true
@@ -39,13 +110,13 @@ configure_audio_stack() {
     done
 
     if [[ "${pa_ready}" != true ]]; then
-        bashio::log.warning "[Setup] PulseAudio did not become ready within the expected time"
+        log_warning "[Setup] PulseAudio did not become ready within the expected time"
     else
         if ! /command/s6-setuidgid pulse pactl list short sinks | grep -q "\\<bt_snapcast\\>"; then
             /command/s6-setuidgid pulse pactl load-module module-null-sink \\
                 sink_name=bt_snapcast \\
                 sink_properties=device.description="Bluetooth->Snapcast" || \\
-                bashio::log.warning "[Setup] Failed to load module-null-sink"
+                log_warning "[Setup] Failed to load module-null-sink"
 
             /command/s6-setuidgid pulse pactl load-module module-pipe-sink \\
                 sink=bt_snapcast \\
@@ -53,19 +124,19 @@ configure_audio_stack() {
                 format=s16le \\
                 rate=44100 \\
                 channels=2 || \\
-                bashio::log.warning "[Setup] Failed to load module-pipe-sink"
+                log_warning "[Setup] Failed to load module-pipe-sink"
         fi
 
         if ! /command/s6-setuidgid pulse pactl set-default-sink bt_snapcast; then
-            bashio::log.warning "[Setup] Unable to set bt_snapcast as the default PulseAudio sink"
+            log_warning "[Setup] Unable to set bt_snapcast as the default PulseAudio sink"
         fi
     fi
 
     if ! command -v bluetoothctl >/dev/null 2>&1; then
-        bashio::log.warning "[BT] bluetoothctl not found; skipping Bluetooth controller configuration"
+        log_warning "[BT] bluetoothctl not found; skipping Bluetooth controller configuration"
         controller=""
     else
-        bashio::log.info "[Setup] Waiting for Bluetooth controller"
+        log_info "[Setup] Waiting for Bluetooth controller"
         controller=""
         local bluetooth_ready=false
         local bluetooth_output=""
@@ -80,13 +151,13 @@ configure_audio_stack() {
         done
 
         if [[ "${bluetooth_ready}" != true ]]; then
-            bashio::log.warning "[BT] Unable to communicate with bluetoothd; skipping controller configuration"
+            log_warning "[BT] Unable to communicate with bluetoothd; skipping controller configuration"
             controller=""
         fi
     fi
 
     if [[ -n "${controller}" ]]; then
-        bashio::log.info "[BT] Found controller: ${controller}"
+        log_info "[BT] Found controller: ${controller}"
         if ! bluetoothctl --timeout 5 <<EOF
 select ${controller}
 power on
@@ -96,39 +167,26 @@ pairable on
 discoverable on
 EOF
         then
-            bashio::log.warning "[BT] Unable to configure Bluetooth controller ${controller}"
+            log_warning "[BT] Unable to configure Bluetooth controller ${controller}"
         fi
     else
-        bashio::log.warning "[BT] No Bluetooth controller detected"
+        log_warning "[BT] No Bluetooth controller detected"
     fi
 }
 
 shopt -s extglob
 
-declare streams
-declare stream_bis
-declare stream_ter
-declare buffer
-declare codec
-declare muted
-declare sampleformat
-declare http
-declare tcp
-declare logging
-declare threads
-declare datadir
-
 config=/etc/snapserver.conf
 
-if ! bashio::fs.file_exists '/etc/snapserver.conf'; then
+if [[ ! -f '/etc/snapserver.conf' ]]; then
     touch /etc/snapserver.conf ||
-        bashio::exit.nok "Could not create snapserver.conf file on filesystem"
+        exit_nok "Could not create snapserver.conf file on filesystem"
 fi
 # Emit a clear marker so every start of the add-on is easy to spot in the
 # Supervisor logs.
-bashio::log.notice "---------- SnapServer add-on starting: $(date '+%Y-%m-%d %H:%M:%S') ----------"
+log_notice "---------- SnapServer add-on starting: $(date '+%Y-%m-%d %H:%M:%S') ----------"
 
-bashio::log.info "Populating snapserver.conf..."
+log_info "Populating snapserver.conf..."
 
 echo "[stream]" > "${config}"
 
@@ -156,56 +214,59 @@ sanitize_streams() {
 }
 
 # Streams
-sanitize_streams "$(bashio::config 'streams')"
+streams_value=$(config_get 'streams') || exit_nok "Required option 'streams' is missing"
+sanitize_streams "${streams_value}"
 
 # Optional additional streams
-if bashio::config.has_value 'stream_bis'; then
-    sanitize_streams "$(bashio::config 'stream_bis')"
+if config_has_value 'stream_bis'; then
+    stream_bis_value=$(config_get 'stream_bis')
+    sanitize_streams "${stream_bis_value}"
 fi
-if bashio::config.has_value 'stream_ter'; then
-    sanitize_streams "$(bashio::config 'stream_ter')"
+if config_has_value 'stream_ter'; then
+    stream_ter_value=$(config_get 'stream_ter')
+    sanitize_streams "${stream_ter_value}"
 fi
 
 # Buffer
-buffer=$(bashio::config 'buffer')
+buffer=$(config_get 'buffer' '')
 echo "buffer = ${buffer}" >> "${config}"
 # Codec
-codec=$(bashio::config 'codec')
+codec=$(config_get 'codec' '')
 echo "codec = ${codec}" >> "${config}"
 # Muted
-muted=$(bashio::config 'send_to_muted')
+muted=$(config_get 'send_to_muted' '')
 echo "send_to_muted = ${muted}" >> "${config}"
 # Sampleformat
-sampleformat=$(bashio::config 'sampleformat')
+sampleformat=$(config_get 'sampleformat' '')
 echo "sampleformat = ${sampleformat}" >> "${config}"
 
 # Http
-http=$(bashio::config 'http_enabled')
+http=$(config_get 'http_enabled' '')
 echo "[http]" >> "${config}"
 echo "enabled = ${http}" >> "${config}"
 echo "bind_to_address = ::" >> "${config}"
 # Datadir
-datadir=$(bashio::config 'server_datadir')
+datadir=$(config_get 'server_datadir' '')
 echo "doc_root = ${datadir}" >> "${config}"
 # TCP
 
 echo "[tcp]" >> "${config}"
-tcp=$(bashio::config 'tcp_enabled')
+tcp=$(config_get 'tcp_enabled' '')
 echo "enabled = ${tcp}" >> "${config}"
 
 # Logging
 echo "[logging]" >> "${config}"
-logging=$(bashio::config 'logging_enabled')
+logging=$(config_get 'logging_enabled' '')
 echo "debug = ${logging}" >> "${config}"
 
 # Threads
 echo "[server]" >> "${config}"
-threads=$(bashio::config 'server_threads')
+threads=$(config_get 'server_threads' '')
 echo "threads = ${threads}" >> "${config}"
 
 # streaming client
 echo "[streaming_client]" >> "${config}"
-initial_volume=$(bashio::config 'initial_volume')
+initial_volume=$(config_get 'initial_volume' '')
 echo "initial_volume = ${initial_volume}" >> "${config}"
 
 # Start SnapServer and post-process its output so the timestamps are refreshed on
@@ -214,7 +275,7 @@ echo "initial_volume = ${initial_volume}" >> "${config}"
 configure_audio_stack &
 setup_pid=$!
 
-bashio::log.info "Starting SnapServer... (log reset)"
+log_info "Starting SnapServer... (log reset)"
 
 snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
   BEGIN { print "[" dts "] [LOG RESET] ------------------------" }
