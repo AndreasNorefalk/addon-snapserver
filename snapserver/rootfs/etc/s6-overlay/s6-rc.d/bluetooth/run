@@ -28,6 +28,14 @@ if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
     log_warning "[BT] system bus socket not available after waiting"
 fi
 
+if command -v bluetoothctl >/dev/null 2>&1; then
+    controllers="$(bluetoothctl --timeout 1 list 2>/dev/null || true)"
+    if [[ -n "${controllers}" ]]; then
+        log_info "[BT] Detected existing BlueZ controller(s) via host bluetoothd; skipping bundled daemon startup."
+        exec tail -f /dev/null
+    fi
+fi
+
 log_info "[BT] Starting bluetoothd"
 if pidof bluetoothd >/dev/null 2>&1; then
     log_warning "[BT] Detected an existing bluetoothd process on the host. Skipping internal daemon startup."

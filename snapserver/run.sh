@@ -72,6 +72,24 @@ config_has_value() {
     fi
 }
 
+run_as_pulse() {
+    local -a dropper=()
+
+    if [[ -x /command/s6-setuidgid ]]; then
+        dropper=(/command/s6-setuidgid pulse)
+    elif command -v su-exec >/dev/null 2>&1; then
+        dropper=(su-exec pulse)
+    elif command -v runuser >/dev/null 2>&1; then
+        dropper=(runuser -u pulse --)
+    fi
+
+    if [[ ${#dropper[@]} -gt 0 ]]; then
+        "${dropper[@]}" "$@"
+    else
+        "$@"
+    fi
+}
+
 if [[ ! -f "${CONFIG_PATH}" ]]; then
     exit_nok "Configuration file ${CONFIG_PATH} not found"
 fi
@@ -105,7 +123,7 @@ configure_audio_stack() {
 
     log_info "[Setup] Waiting for PulseAudio to become available"
     for attempt in $(seq 1 50); do
-        if /command/s6-setuidgid pulse pactl info &>/dev/null; then
+        if run_as_pulse pactl info &>/dev/null; then
             pa_ready=true
             break
         fi
@@ -115,18 +133,18 @@ configure_audio_stack() {
     if [[ "${pa_ready}" != true ]]; then
         log_warning "[Setup] PulseAudio did not become ready within the expected time"
     else
-        if ! /command/s6-setuidgid pulse pactl list short sinks | grep -q "\\<bt_snapcast\\>"; then
-            /command/s6-setuidgid pulse pactl load-module module-pipe-sink \\
-                sink_name=bt_snapcast \\
-                sink_properties=device.description="Bluetooth->Snapcast" \\
-                file=/tmp/snapfifo \\
-                format=s16le \\
-                rate=44100 \\
-                channels=2 || \\
+        if ! run_as_pulse pactl list short sinks | grep -q "\<bt_snapcast\>"; then
+            run_as_pulse pactl load-module module-pipe-sink \
+                sink_name=bt_snapcast \
+                sink_properties=device.description="Bluetooth->Snapcast" \
+                file=/tmp/snapfifo \
+                format=s16le \
+                rate=44100 \
+                channels=2 || \
                 log_warning "[Setup] Failed to load module-pipe-sink"
         fi
 
-        if ! /command/s6-setuidgid pulse pactl set-default-sink bt_snapcast; then
+        if ! run_as_pulse pactl set-default-sink bt_snapcast; then
             log_warning "[Setup] Unable to set bt_snapcast as the default PulseAudio sink"
         fi
     fi
@@ -172,6 +190,7 @@ EOF
         log_warning "[BT] No Bluetooth controller detected"
     fi
 }
+
 
 shopt -s extglob
 
