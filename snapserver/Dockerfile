@@ -7,7 +7,7 @@ SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 # hadolint ignore=DL3003
 RUN \
     apk add --no-cache \
-        pulseaudio alsa-plugins-pulse bash jq nss-mdns \
+        pulseaudio alsa-plugins-pulse bash jq \
     && rm -fr \
         /tmp/*
 
