@@ -113,13 +113,9 @@ configure_audio_stack() {
         log_warning "[Setup] PulseAudio did not become ready within the expected time"
     else
         if ! /command/s6-setuidgid pulse pactl list short sinks | grep -q "\\<bt_snapcast\\>"; then
-            /command/s6-setuidgid pulse pactl load-module module-null-sink \\
-                sink_name=bt_snapcast \\
-                sink_properties=device.description="Bluetooth->Snapcast" || \\
-                log_warning "[Setup] Failed to load module-null-sink"
-
             /command/s6-setuidgid pulse pactl load-module module-pipe-sink \\
-                sink=bt_snapcast \\
+                sink_name=bt_snapcast \\
+                sink_properties=device.description="Bluetooth->Snapcast" \\
                 file=/tmp/snapfifo \\
                 format=s16le \\
                 rate=44100 \\
