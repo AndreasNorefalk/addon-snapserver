@@ -28,7 +28,7 @@ options:
   buffer: 1000
   codec: "flac"
   send_to_muted: "false"
-  sampleformat: "48000:16:2"
+  sampleformat: "44100:16:2"
   http_enabled: "true"
   tcp_enabled: "true"
   logging_enabled: "true"
