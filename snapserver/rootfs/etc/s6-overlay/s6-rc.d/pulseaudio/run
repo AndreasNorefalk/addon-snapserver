@@ -52,5 +52,16 @@ if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
 fi
 
 log_info "[PA] Starting PulseAudio"
-exec /command/s6-setuidgid pulse pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+if command -v su-exec >/dev/null 2>&1; then
+    exec su-exec pulse pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+        --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
+fi
+
+if command -v runuser >/dev/null 2>&1; then
+    exec runuser -u pulse -- pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+        --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
+fi
+
+# As a last resort, run PulseAudio as root so the service can still start.
+exec pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
     --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
