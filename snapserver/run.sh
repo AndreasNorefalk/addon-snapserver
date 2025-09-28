@@ -73,25 +73,26 @@ config_has_value() {
 }
 
 run_as_pulse() {
-    local -a dropper=()
+    if command -v runuser >/dev/null 2>&1; then
+        runuser -u pulse -- "$@"
+        return $?
+    fi
+
+    if command -v setpriv >/dev/null 2>&1; then
+        setpriv --reuid pulse --regid pulse --init-groups "$@"
+        return $?
+    fi
 
     if command -v su-exec >/dev/null 2>&1; then
-        dropper=(su-exec pulse)
-    elif command -v runuser >/dev/null 2>&1; then
-        dropper=(runuser -u pulse --)
-    elif [[ -x /command/s6-setuidgid ]]; then
-        # s6-setuidgid is available in some base images, but newer s6-overlay
-        # releases restrict its helper to PID 1 which causes startup failures.
-        # Keep it as a last-resort fallback for older images where it still
-        # works.
-        dropper=(/command/s6-setuidgid pulse)
+        if su-exec pulse "$@"; then
+            return 0
+        fi
+
+        local status=$?
+        log_warning "su-exec failed with status ${status}; running command as root instead"
     fi
 
-    if [[ ${#dropper[@]} -gt 0 ]]; then
-        "${dropper[@]}" "$@"
-    else
-        "$@"
-    fi
+    "$@"
 }
 
 if [[ ! -f "${CONFIG_PATH}" ]]; then
