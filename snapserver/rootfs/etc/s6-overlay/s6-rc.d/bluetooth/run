@@ -23,7 +23,7 @@ if [[ ! -d /sys/class/bluetooth ]] || ! compgen -G '/sys/class/bluetooth/hci*' >
     exec tail -f /dev/null
 fi
 
-disabled_plugins=(sap bap bass mcp vcp micp ccp csip)
+disabled_plugins=(sap bap bass mcp vcp micp ccp csip rfkill)
 plugin_arg="$(IFS=,; echo "${disabled_plugins[*]}")"
 
 cmd=(/usr/lib/bluetooth/bluetoothd --nodetach --noplugin="${plugin_arg}")
