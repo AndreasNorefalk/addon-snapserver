@@ -52,8 +52,9 @@ if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
 fi
 
 log_info "[PA] Starting PulseAudio"
-if command -v su-exec >/dev/null 2>&1; then
-    exec su-exec pulse pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+if command -v setpriv >/dev/null 2>&1; then
+    exec setpriv --reuid pulse --regid pulse --init-groups \
+        pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
         --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
 fi
 
