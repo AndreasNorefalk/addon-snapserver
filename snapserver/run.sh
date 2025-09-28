@@ -81,8 +81,11 @@ mkdir -p /share/snapcast
 
 # Ensure that the FIFO used by PulseAudio exists so Snapserver can attach to it.
 if [[ ! -p /tmp/snapfifo ]]; then
-    mkfifo /tmp/snapfifo
+    mkfifo -m 0660 /tmp/snapfifo
+else
+    chmod 0660 /tmp/snapfifo || true
 fi
+chown pulse:pulse /tmp/snapfifo 2>/dev/null || true
 
 # Export environment variables that make PulseAudio and pactl behave in a
 # predictable headless manner.
