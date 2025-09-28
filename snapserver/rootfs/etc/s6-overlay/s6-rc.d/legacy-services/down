@@ -1,0 +1,1 @@
+# Keep the legacy services shim disabled; all services use native s6-rc definitions.
