@@ -7,12 +7,6 @@ load-module module-bluetooth-discover
 # Create a virtual sink for Snapcast that writes PCM data to the FIFO used by
 # Snapserver.  The pipe sink itself is exposed as the default sink so Bluetooth
 # audio routed by module-bluetooth-policy is captured automatically.
-load-module module-pipe-sink \
-    sink_name=bt_snapcast \
-    sink_properties=device.description="Bluetooth->Snapcast" \
-    file=/tmp/snapfifo \
-    format=s16le \
-    rate=44100 \
-    channels=2
+load-module module-pipe-sink sink_name=bt_snapcast sink_properties=device.description="Bluetooth->Snapcast" file=/tmp/snapfifo format=s16le rate=44100 channels=2
 
 set-default-sink bt_snapcast

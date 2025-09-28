@@ -1,6 +1,6 @@
 ---
 name: Snapcast Server (Andreas fork)
-version: 0.1.45
+version: 0.1.46
 slug: snapcastserver_andreas
 description: "Snapcast server with bluetooth input"
 url: https://github.com/AndreasNorefalk/addon-snapserver
