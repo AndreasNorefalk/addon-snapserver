@@ -1,6 +1,22 @@
-#!/command/with-contenv bashio
+#!/command/with-contenv bash
 
-bashio::log.info "[DBUS] Preparing runtime directory"
+set -euo pipefail
+
+log() {
+    local level="$1"
+    shift
+    printf '[%s] %s\n' "$level" "$*"
+}
+
+log_info() {
+    log "INFO" "$@"
+}
+
+log_warning() {
+    log "WARN" "$@"
+}
+
+log_info "[DBUS] Preparing runtime directory"
 mkdir -p /run/dbus
 
 if [[ ! -e /var/run/dbus ]]; then
@@ -8,5 +24,5 @@ if [[ ! -e /var/run/dbus ]]; then
     ln -s /run/dbus /var/run/dbus
 fi
 
-bashio::log.info "[DBUS] Starting system bus"
+log_info "[DBUS] Starting system bus"
 exec dbus-daemon --system --nofork --nopidfile --nosyslog

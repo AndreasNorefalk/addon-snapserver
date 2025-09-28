@@ -1,6 +1,22 @@
-#!/command/with-contenv bashio
+#!/command/with-contenv bash
 
-bashio::log.info "[BT] Waiting for system bus"
+set -euo pipefail
+
+log() {
+    local level="$1"
+    shift
+    printf '[%s] %s\n' "$level" "$*"
+}
+
+log_info() {
+    log "INFO" "$@"
+}
+
+log_warning() {
+    log "WARN" "$@"
+}
+
+log_info "[BT] Waiting for system bus"
 for _ in $(seq 1 50); do
     if [[ -S /var/run/dbus/system_bus_socket ]]; then
         break
@@ -9,17 +25,17 @@ for _ in $(seq 1 50); do
 done
 
 if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
-    bashio::log.warning "[BT] system bus socket not available after waiting"
+    log_warning "[BT] system bus socket not available after waiting"
 fi
 
-bashio::log.info "[BT] Starting bluetoothd"
+log_info "[BT] Starting bluetoothd"
 if pidof bluetoothd >/dev/null 2>&1; then
-    bashio::log.warning "[BT] Detected an existing bluetoothd process on the host. Skipping internal daemon startup."
+    log_warning "[BT] Detected an existing bluetoothd process on the host. Skipping internal daemon startup."
     exec tail -f /dev/null
 fi
 
 if [[ ! -d /sys/class/bluetooth ]] || ! compgen -G '/sys/class/bluetooth/hci*' >/dev/null; then
-    bashio::log.warning "[BT] No Bluetooth kernel interfaces detected. Skipping internal daemon startup."
+    log_warning "[BT] No Bluetooth kernel interfaces detected. Skipping internal daemon startup."
     exec tail -f /dev/null
 fi
 
@@ -34,9 +50,9 @@ bt_pid=$!
 # already owns the Bluetooth resources on the host).
 sleep 1
 if ! kill -0 "${bt_pid}" 2>/dev/null; then
-    wait "${bt_pid}"
+    wait "${bt_pid}" || true
     exit_code=$?
-    bashio::log.warning "[BT] bluetoothd failed to start (exit code: ${exit_code}). Continuing without the bundled daemon."
+    log_warning "[BT] bluetoothd failed to start (exit code: ${exit_code}). Continuing without the bundled daemon."
     exec tail -f /dev/null
 fi
 
@@ -51,7 +67,10 @@ trap 'terminate TERM' TERM
 trap 'terminate INT' INT
 trap 'terminate QUIT' QUIT
 
+set +e
 wait "${bt_pid}"
 exit_code=$?
-bashio::log.info "[BT] bluetoothd exited with code ${exit_code}"
+set -e
+
+log_info "[BT] bluetoothd exited with code ${exit_code}"
 exit "${exit_code}"

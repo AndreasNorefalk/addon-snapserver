@@ -1,6 +1,22 @@
-#!/command/with-contenv bashio
+#!/command/with-contenv bash
 
-bashio::log.info "[PA] Preparing runtime directories"
+set -euo pipefail
+
+log() {
+    local level="$1"
+    shift
+    printf '[%s] %s\n' "$level" "$*"
+}
+
+log_info() {
+    log "INFO" "$@"
+}
+
+log_warning() {
+    log "WARN" "$@"
+}
+
+log_info "[PA] Preparing runtime directories"
 mkdir -p /var/run/pulse/.config/pulse
 mkdir -p /run/pulse
 mkdir -p /etc/pulse/system.pa.d
@@ -23,7 +39,7 @@ export PULSE_COOKIE="/var/run/pulse/.config/pulse/cookie"
 export DBUS_SYSTEM_BUS_ADDRESS="unix:path=/var/run/dbus/system_bus_socket"
 export DBUS_SESSION_BUS_ADDRESS="${DBUS_SYSTEM_BUS_ADDRESS}"
 
-bashio::log.info "[PA] Waiting for system bus"
+log_info "[PA] Waiting for system bus"
 for _ in $(seq 1 50); do
     if [[ -S /var/run/dbus/system_bus_socket ]]; then
         break
@@ -32,8 +48,9 @@ for _ in $(seq 1 50); do
 done
 
 if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
-    bashio::log.warning "[PA] system bus socket not available after waiting"
+    log_warning "[PA] system bus socket not available after waiting"
 fi
-bashio::log.info "[PA] Starting PulseAudio"
+
+log_info "[PA] Starting PulseAudio"
 exec /command/s6-setuidgid pulse pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
     --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
