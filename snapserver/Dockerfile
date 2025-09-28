@@ -1,25 +1,34 @@
-ARG BUILD_FROM
-FROM $BUILD_FROM
+ARG BUILD_FROM=ghcr.io/hassio-addons/base:18.1.3
+FROM ${BUILD_FROM}
 
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-# hadolint ignore=DL3003
-RUN \
-    apk add --no-cache \
-        pulseaudio alsa-plugins-pulse bash jq su-exec util-linux \
-    && rm -fr \
-        /tmp/*
+ARG ALPINE_VERSION=3.21
+ARG ALPINE_REPO_BASE=https://dl-cdn.alpinelinux.org/alpine
 
-# Install Bluetooth, Avahi, and supporting tools
-RUN apk add --no-cache \
+# hadolint ignore=DL3003
+# Pin the Alpine repositories to avoid intermittent BAD archive errors from upstream mirrors.
+RUN \
+    ALPINE_MAIN_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/main" && \
+    ALPINE_COMMUNITY_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/community" && \
+    apk add --no-cache \
+        --repository="${ALPINE_MAIN_REPO}" \
+        --repository="${ALPINE_COMMUNITY_REPO}" \
+        alsa-plugins-pulse \
+        avahi \
+        avahi-tools \
+        bash \
         bluez \
+        dbus \
+        jq \
         pulseaudio \
         pulseaudio-bluez \
         pulseaudio-utils \
-        dbus \
-        avahi \
-        avahi-tools
+        su-exec \
+        util-linux \
+    && rm -fr \
+        /tmp/*
 
 # Copy root filesystem with services
 COPY rootfs /
