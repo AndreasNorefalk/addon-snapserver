@@ -22,6 +22,7 @@ RUN \
         bluez \
         dbus \
         jq \
+        openssl \
         pulseaudio \
         pulseaudio-bluez \
         pulseaudio-utils \
@@ -34,8 +35,34 @@ RUN \
 COPY rootfs /
 RUN find /etc/s6-overlay/s6-rc.d -maxdepth 2 -type f \( -name run -o -name up \) -exec chmod +x {} \;
 
-# Install Librespot (latest from edge/testing)
-RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/testing/ librespot
+# Install Librespot from source to avoid flaky edge packages
+ARG LIBRESPOT_VERSION=0.7.1
+
+RUN \
+    ALPINE_MAIN_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/main" && \
+    ALPINE_COMMUNITY_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/community" && \
+    apk add --no-cache --virtual .build-deps \
+        --repository="${ALPINE_MAIN_REPO}" \
+        --repository="${ALPINE_COMMUNITY_REPO}" \
+        alsa-lib-dev \
+        build-base \
+        cargo \
+        clang \
+        git \
+        openssl-dev \
+        pkgconf \
+        pulseaudio-dev \
+    && cargo install \
+        --locked \
+        --root /usr \
+        --version "${LIBRESPOT_VERSION}" \
+        librespot \
+    && strip /usr/bin/librespot \
+    && apk del .build-deps \
+    && rm -rf \
+        /root/.cache \
+        /root/.cargo \
+        /root/.rustup
 
 # Install Snapcast
 RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ snapcast-server
