@@ -14,10 +14,7 @@ RUN \
     ALPINE_COMMUNITY_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/community" && \
     apk upgrade --no-cache \
         --repository="${ALPINE_MAIN_REPO}" \
-        --repository="${ALPINE_COMMUNITY_REPO}" \
-        libcrypto3 \
-        libssl3 \
-        openssl && \
+        --repository="${ALPINE_COMMUNITY_REPO}" && \
     apk add --no-cache \
         --repository="${ALPINE_MAIN_REPO}" \
         --repository="${ALPINE_COMMUNITY_REPO}" \
