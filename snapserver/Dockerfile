@@ -4,7 +4,7 @@ FROM ${BUILD_FROM}
 # Set shell
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
-ARG ALPINE_VERSION=3.21
+ARG ALPINE_VERSION=3.22
 ARG ALPINE_REPO_BASE=https://dl-cdn.alpinelinux.org/alpine
 
 # hadolint ignore=DL3003
@@ -54,10 +54,10 @@ RUN \
         pulseaudio-dev \
     && cargo install \
         --locked \
-        --root /usr \
+        --root /usr/local \
         --version "${LIBRESPOT_VERSION}" \
         librespot \
-    && strip /usr/bin/librespot \
+    && strip /usr/local/bin/librespot \
     && apk del .build-deps \
     && rm -rf \
         /root/.cache \
