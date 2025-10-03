@@ -10,6 +10,11 @@ ARG ALPINE_REPO_BASE=https://dl-cdn.alpinelinux.org/alpine
 # hadolint ignore=DL3003
 # Pin the Alpine repositories to avoid intermittent BAD archive errors from upstream mirrors.
 RUN \
+    for package in libcrypto3 libssl3 openssl; do \
+        if grep -q "^${package}=" /etc/apk/world; then \
+            sed -i "s/^${package}=.*/${package}/" /etc/apk/world; \
+        fi; \
+    done && \
     ALPINE_MAIN_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/main" && \
     ALPINE_COMMUNITY_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/community" && \
     apk upgrade --no-cache \
