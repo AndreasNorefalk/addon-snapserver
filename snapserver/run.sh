@@ -88,9 +88,9 @@ run_as_pulse() {
         return $?
     fi
 
-    # Note: s6-setuidgid and s6-applyuidgid are not used because they internally
-    # call s6-overlay-suexec which requires running as PID 1. This add-on uses
-    # init: false, so s6-overlay is not active and these commands will fail.
+    # Note: s6-setuidgid and s6-applyuidgid are not used here to avoid
+    # dependencies on s6-overlay-specific commands in the main run script.
+    # This allows the script to work with standard user-switching tools.
 
     "$@"
 }
