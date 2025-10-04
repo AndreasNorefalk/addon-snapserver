@@ -83,14 +83,16 @@ run_as_pulse() {
         return $?
     fi
 
-    if command -v su-exec >/dev/null 2>&1; then
-        su-exec pulse:pulse "$@"
+    if command -v s6-setuidgid >/dev/null 2>&1; then
+        s6-setuidgid pulse "$@"
         return $?
     fi
 
-    # Note: s6-setuidgid and s6-applyuidgid are not used here to avoid
-    # dependencies on s6-overlay-specific commands in the main run script.
-    # This allows the script to work with standard user-switching tools.
+    # Note: su-exec (provided by s6-overlay as s6-overlay-suexec) can only be
+    # invoked by PID 1.  Since this script runs as a regular service when the
+    # add-on is started with init: true, falling back to su-exec would abort the
+    # service.  Therefore we intentionally avoid it here and rely on more
+    # generally available tooling instead.
 
     "$@"
 }
