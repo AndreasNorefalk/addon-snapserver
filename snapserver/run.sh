@@ -83,6 +83,13 @@ run_as_pulse() {
         return $?
     fi
 
+    # Prefer su-exec before the s6 helpers; s6-overlay v3 limits suexec to PID 1
+    # which makes those commands unusable from inside the add-on runtime.
+    if command -v su-exec >/dev/null 2>&1; then
+        su-exec pulse:pulse "$@"
+        return $?
+    fi
+
     if command -v s6-setuidgid >/dev/null 2>&1; then
         s6-setuidgid pulse "$@"
         return $?
@@ -90,11 +97,6 @@ run_as_pulse() {
 
     if command -v s6-applyuidgid >/dev/null 2>&1; then
         s6-applyuidgid -u pulse -g pulse -- "$@"
-        return $?
-    fi
-
-    if command -v su-exec >/dev/null 2>&1; then
-        su-exec pulse:pulse "$@"
         return $?
     fi
 
