@@ -63,9 +63,8 @@ if command -v runuser >/dev/null 2>&1; then
         --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
 fi
 
-if command -v s6-applyuidgid >/dev/null 2>&1; then
-    exec s6-applyuidgid -u pulse -g pulse -- \
-        pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+if command -v su-exec >/dev/null 2>&1; then
+    exec su-exec pulse:pulse pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
         --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
 fi
 
