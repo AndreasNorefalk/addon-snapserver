@@ -73,27 +73,17 @@ config_has_value() {
 }
 
 run_as_pulse() {
-    if command -v runuser >/dev/null 2>&1; then
-        runuser -u pulse -- "$@"
-        return $?
-    fi
-
     if command -v setpriv >/dev/null 2>&1; then
         setpriv --reuid pulse --regid pulse --init-groups "$@"
         return $?
     fi
 
-    if command -v s6-setuidgid >/dev/null 2>&1; then
-        s6-setuidgid pulse "$@"
+    if command -v runuser >/dev/null 2>&1; then
+        runuser -u pulse -- "$@"
         return $?
     fi
 
-    # Note: su-exec (provided by s6-overlay as s6-overlay-suexec) can only be
-    # invoked by PID 1.  Since this script runs as a regular service when the
-    # add-on is started with init: true, falling back to su-exec would abort the
-    # service.  Therefore we intentionally avoid it here and rely on more
-    # generally available tooling instead.
-
+    log_warning "[Setup] Unable to drop privileges; running command as root: $1"
     "$@"
 }
 

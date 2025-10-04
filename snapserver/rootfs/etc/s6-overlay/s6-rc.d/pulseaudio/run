@@ -63,11 +63,6 @@ if command -v runuser >/dev/null 2>&1; then
         --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
 fi
 
-if command -v s6-setuidgid >/dev/null 2>&1; then
-    exec s6-setuidgid pulse pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
-        --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
-fi
-
-# As a last resort, run PulseAudio as root so the service can still start.
+log_warning "[PA] Falling back to running PulseAudio as root"
 exec pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
     --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
