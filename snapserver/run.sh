@@ -83,8 +83,8 @@ run_as_pulse() {
         return $?
     fi
 
-    if command -v s6-applyuidgid >/dev/null 2>&1; then
-        s6-applyuidgid -u pulse -g pulse -- "$@"
+    if command -v su-exec >/dev/null 2>&1; then
+        su-exec pulse:pulse "$@"
         return $?
     fi
 
