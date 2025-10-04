@@ -63,6 +63,12 @@ if command -v runuser >/dev/null 2>&1; then
         --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
 fi
 
+if command -v s6-applyuidgid >/dev/null 2>&1; then
+    exec s6-applyuidgid -u pulse -g pulse -- \
+        pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+        --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
+fi
+
 # As a last resort, run PulseAudio as root so the service can still start.
 exec pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
     --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
