@@ -1,0 +1,7 @@
+#!/command/with-contenv sh
+
+# The services within this add-on are implemented with native s6-rc entries.
+# Keep the legacy shim in a no-op state so the supervisor doesn't attempt to
+# launch the deprecated services.d tree.
+printf '%s\n' "[INFO] [s6] legacy services shim disabled"
+exit 0
