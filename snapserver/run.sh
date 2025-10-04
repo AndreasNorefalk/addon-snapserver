@@ -83,13 +83,9 @@ run_as_pulse() {
         return $?
     fi
 
-    if command -v su-exec >/dev/null 2>&1; then
-        if su-exec pulse "$@"; then
-            return 0
-        fi
-
-        local status=$?
-        log_warning "su-exec failed with status ${status}; running command as root instead"
+    if command -v s6-applyuidgid >/dev/null 2>&1; then
+        s6-applyuidgid -u pulse -g pulse -- "$@"
+        return $?
     fi
 
     "$@"
