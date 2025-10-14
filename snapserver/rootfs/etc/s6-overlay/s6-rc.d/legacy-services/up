@@ -1,9 +1,0 @@
-#!/command/with-contenv sh
-
-# Override the default legacy-services stage from the base image which
-# attempts to execute s6-overlay-suexec directly and fails with
-# "can only run as pid 1".  We do not rely on any legacy /etc/cont-init.d
-# or /etc/services.d hooks, so turn the step into a no-op while keeping the
-# hook present so the dependency graph remains satisfied.
-printf '%s\n' '[legacy-services] Skipping legacy service startup'
-exit 0
