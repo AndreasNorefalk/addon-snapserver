@@ -40,6 +40,7 @@ RUN \
         /tmp/*
 
 # Copy root filesystem with services
+RUN rm -rf /etc/s6-overlay/s6-rc.d/legacy-services
 COPY rootfs /
 RUN find /etc/s6-overlay/s6-rc.d -maxdepth 2 -type f \( -name run -o -name up \) -exec chmod +x {} \;
 
