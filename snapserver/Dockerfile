@@ -40,9 +40,52 @@ RUN \
         /tmp/*
 
 # Copy root filesystem with services
-RUN rm -rf /etc/s6-overlay/s6-rc.d/legacy-services
 COPY rootfs /
 RUN find /etc/s6-overlay/s6-rc.d -maxdepth 2 -type f \( -name run -o -name up \) -exec chmod +x {} \;
+
+# Disable the legacy services stage that conflicts with the base image by
+# transforming the upstream s6 overlay helpers into no-ops.  Rely on a glob so
+# the commands survive future overlay version bumps.
+RUN set -euxo pipefail \
+    && shopt -s nullglob \
+    && legacy_services_up=(/package/admin/s6-overlay-*/etc/s6-rc/scripts/services-up) \
+    && legacy_services_down=(/package/admin/s6-overlay-*/etc/s6-rc/scripts/services-down) \
+    && [ "${#legacy_services_up[@]}" -gt 0 ] \
+    && [ "${#legacy_services_down[@]}" -gt 0 ] \
+    && for script in "${legacy_services_up[@]}"; do \
+        cat <<'EOF' > "${script}"; \
+#!/command/with-contenv sh
+
+verbosity="${S6_VERBOSITY:-2}"
+case "${verbosity}" in
+    ''|*[!0-9]*)
+        verbosity=2
+        ;;
+esac
+if [ "${verbosity}" -ge 2 ]; then
+    printf '%s\n' '[legacy-services] Skipping legacy service startup' >&2
+fi
+exit 0
+EOF
+        chmod 0755 "${script}"; \
+    done \
+    && for script in "${legacy_services_down[@]}"; do \
+        cat <<'EOF' > "${script}"; \
+#!/command/with-contenv sh
+
+verbosity="${S6_VERBOSITY:-2}"
+case "${verbosity}" in
+    ''|*[!0-9]*)
+        verbosity=2
+        ;;
+esac
+if [ "${verbosity}" -ge 2 ]; then
+    printf '%s\n' '[legacy-services] Skipping legacy service shutdown' >&2
+fi
+exit 0
+EOF
+        chmod 0755 "${script}"; \ 
+    done
 
 # Install Librespot from source to avoid flaky edge packages
 ARG LIBRESPOT_VERSION=0.7.1
