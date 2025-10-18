@@ -53,7 +53,7 @@ RUN set -euxo pipefail \
     && [ "${#legacy_services_up[@]}" -gt 0 ] \
     && [ "${#legacy_services_down[@]}" -gt 0 ] \
     && for script in "${legacy_services_up[@]}"; do \
-        cat <<'EOF' > "${script}"; \
+        cat <<'EOF' > "${script}"
 #!/command/with-contenv sh
 
 verbosity="${S6_VERBOSITY:-2}"
@@ -70,7 +70,7 @@ EOF
         chmod 0755 "${script}"; \
     done \
     && for script in "${legacy_services_down[@]}"; do \
-        cat <<'EOF' > "${script}"; \
+        cat <<'EOF' > "${script}"
 #!/command/with-contenv sh
 
 verbosity="${S6_VERBOSITY:-2}"
@@ -84,7 +84,7 @@ if [ "${verbosity}" -ge 2 ]; then
 fi
 exit 0
 EOF
-        chmod 0755 "${script}"; \ 
+        chmod 0755 "${script}"; \
     done
 
 # Install Librespot from source to avoid flaky edge packages
