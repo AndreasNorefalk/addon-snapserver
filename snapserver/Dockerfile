@@ -52,38 +52,9 @@ RUN set -euxo pipefail \
     && legacy_services_down=(/package/admin/s6-overlay-*/etc/s6-rc/scripts/services-down) \
     && [ "${#legacy_services_up[@]}" -gt 0 ] \
     && [ "${#legacy_services_down[@]}" -gt 0 ] \
-    && for script in "${legacy_services_up[@]}"; do \
-        cat <<'EOF' > "${script}"
-#!/command/with-contenv sh
-
-verbosity="${S6_VERBOSITY:-2}"
-case "${verbosity}" in
-    ''|*[!0-9]*)
-        verbosity=2
-        ;;
-esac
-if [ "${verbosity}" -ge 2 ]; then
-    printf '%s\n' '[legacy-services] Skipping legacy service startup' >&2
-fi
-exit 0
-EOF
-        chmod 0755 "${script}"; \
-    done \
-    && for script in "${legacy_services_down[@]}"; do \
-        cat <<'EOF' > "${script}"
-#!/command/with-contenv sh
-
-verbosity="${S6_VERBOSITY:-2}"
-case "${verbosity}" in
-    ''|*[!0-9]*)
-        verbosity=2
-        ;;
-esac
-if [ "${verbosity}" -ge 2 ]; then
-    printf '%s\n' '[legacy-services] Skipping legacy service shutdown' >&2
-fi
-exit 0
-EOF
+    && skip_legacy_services_script=/usr/local/bin/skip-legacy-services \
+    && for script in "${legacy_services_up[@]}" "${legacy_services_down[@]}"; do \
+        cp "${skip_legacy_services_script}" "${script}"; \
         chmod 0755 "${script}"; \
     done
 

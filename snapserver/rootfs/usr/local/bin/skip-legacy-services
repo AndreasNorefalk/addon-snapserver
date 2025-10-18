@@ -1,0 +1,24 @@
+#!/command/with-contenv sh
+
+verbosity="${S6_VERBOSITY:-2}"
+case "${verbosity}" in
+    ''|*[!0-9]*)
+        verbosity=2
+        ;;
+esac
+
+action="operation"
+case "$(basename "$0")" in
+    *services-up)
+        action="startup"
+        ;;
+    *services-down)
+        action="shutdown"
+        ;;
+esac
+
+if [ "${verbosity}" -ge 2 ]; then
+    printf '%s\n' "[legacy-services] Skipping legacy service ${action}" >&2
+fi
+
+exit 0
