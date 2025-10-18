@@ -72,14 +72,42 @@ config_has_value() {
     fi
 }
 
+find_system_helper() {
+    local name="$1"
+    local resolved=""
+
+    if resolved=$(command -v "${name}" 2>/dev/null); then
+        if [[ "${resolved}" != /command/* ]]; then
+            printf '%s' "${resolved}"
+            return 0
+        fi
+    fi
+
+    local candidate
+    for candidate in \
+        "/usr/bin/${name}" \
+        "/usr/sbin/${name}" \
+        "/bin/${name}" \
+        "/sbin/${name}"; do
+        if [[ -x "${candidate}" ]]; then
+            printf '%s' "${candidate}"
+            return 0
+        fi
+    done
+
+    return 1
+}
+
 run_as_pulse() {
-    if command -v setpriv >/dev/null 2>&1; then
-        setpriv --reuid pulse --regid pulse --init-groups "$@"
+    local helper
+
+    if helper=$(find_system_helper setpriv); then
+        "${helper}" --reuid pulse --regid pulse --init-groups "$@"
         return $?
     fi
 
-    if command -v runuser >/dev/null 2>&1; then
-        runuser -u pulse -- "$@"
+    if helper=$(find_system_helper runuser); then
+        "${helper}" -u pulse -- "$@"
         return $?
     fi
 
