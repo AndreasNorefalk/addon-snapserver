@@ -101,6 +101,11 @@ find_system_helper() {
 run_as_pulse() {
     local helper
 
+    if [[ -x /command/s6-setuidgid ]]; then
+        /command/s6-setuidgid pulse "$@"
+        return $?
+    fi
+
     if helper=$(find_system_helper setpriv); then
         "${helper}" --reuid pulse --regid pulse --init-groups "$@"
         return $?
