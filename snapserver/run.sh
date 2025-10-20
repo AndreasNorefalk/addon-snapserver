@@ -101,8 +101,8 @@ find_system_helper() {
 run_as_pulse() {
     local helper
 
-    if [[ -x /command/s6-setuidgid ]]; then
-        /command/s6-setuidgid pulse "$@"
+    if helper=$(find_system_helper su-exec); then
+        "${helper}" pulse:pulse "$@"
         return $?
     fi
 
