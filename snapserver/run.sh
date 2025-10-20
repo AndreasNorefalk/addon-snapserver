@@ -116,20 +116,6 @@ run_as_pulse() {
         return $?
     fi
 
-    if helper=$(find_system_helper su-exec); then
-        # Newer Home Assistant base images ship a compatibility wrapper for
-        # su-exec that is backed by s6-overlay-suexec.  The wrapper can only be
-        # invoked as PID 1 which causes the add-on startup to abort when we try
-        # to drop privileges.  Detect that case and fall back to running as
-        # root instead of repeatedly crashing the add-on.
-        if [[ "$(readlink -f "${helper}")" != "/command/s6-overlay-suexec" ]]; then
-            "${helper}" pulse:pulse "$@"
-            return $?
-        fi
-
-        log_warning "[Setup] Ignoring incompatible su-exec helper provided by s6-overlay"
-    fi
-
     log_warning "[Setup] Unable to drop privileges; running command as root: $1"
     "$@"
 }

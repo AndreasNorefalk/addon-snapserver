@@ -34,7 +34,6 @@ RUN \
         pulseaudio \
         pulseaudio-bluez \
         pulseaudio-utils \
-        su-exec \
         util-linux \
     && rm -fr \
         /tmp/*
