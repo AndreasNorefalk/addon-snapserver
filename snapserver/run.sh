@@ -101,11 +101,6 @@ find_system_helper() {
 run_as_pulse() {
     local helper
 
-    if [[ -x /command/s6-setuidgid ]]; then
-        /command/s6-setuidgid pulse:pulse "$@"
-        return $?
-    fi
-
     if helper=$(find_system_helper setpriv); then
         "${helper}" --reuid pulse --regid pulse --init-groups "$@"
         return $?
@@ -114,6 +109,17 @@ run_as_pulse() {
     if helper=$(find_system_helper runuser); then
         "${helper}" -u pulse -- "$@"
         return $?
+    fi
+
+    if [[ -x /command/s6-setuidgid ]]; then
+        local helper_path
+        helper_path=$(readlink -f /command/s6-setuidgid 2>/dev/null || true)
+        if [[ "${helper_path}" == "/command/s6-overlay-suexec" ]]; then
+            log_warning "[Setup] Ignoring incompatible s6-setuidgid helper provided by s6-overlay"
+        else
+            /command/s6-setuidgid pulse:pulse "$@"
+            return $?
+        fi
     fi
 
     log_warning "[Setup] Unable to drop privileges; running command as root: $1"
