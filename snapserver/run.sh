@@ -293,14 +293,27 @@ datadir=$(config_get 'server_datadir' '')
 echo "doc_root = ${datadir}" >> "${config}"
 # TCP
 
-echo "[tcp]" >> "${config}"
 tcp=$(config_get 'tcp_enabled' '')
+echo "[tcp-control]" >> "${config}"
 echo "enabled = ${tcp}" >> "${config}"
+echo "bind_to_address = ::" >> "${config}"
+echo "[tcp-streaming]" >> "${config}"
+echo "enabled = ${tcp}" >> "${config}"
+echo "bind_to_address = ::" >> "${config}"
 
 # Logging
 echo "[logging]" >> "${config}"
 logging=$(config_get 'logging_enabled' '')
-echo "debug = ${logging}" >> "${config}"
+logging_normalized="${logging,,}"
+case "${logging_normalized}" in
+    true|1|yes|on)
+        echo "filter = *:debug" >> "${config}"
+        ;;
+    *)
+        echo "filter = *:info" >> "${config}"
+        ;;
+esac
+echo "sink = stdout" >> "${config}"
 
 # Threads
 echo "[server]" >> "${config}"
