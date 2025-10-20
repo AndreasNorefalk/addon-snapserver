@@ -78,6 +78,12 @@ if [[ ! -S /var/run/dbus/system_bus_socket ]]; then
 fi
 
 log_info "[PA] Starting PulseAudio"
+if [[ -x /command/s6-setuidgid ]]; then
+    exec /command/s6-setuidgid pulse \
+        pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
+        --log-target=stderr --daemonize=no -nF /etc/pulse/system.pa
+fi
+
 if helper=$(find_system_helper setpriv); then
     exec "${helper}" --reuid pulse --regid pulse --init-groups \
         pulseaudio --exit-idle-time=-1 --disallow-exit --disallow-module-loading \
