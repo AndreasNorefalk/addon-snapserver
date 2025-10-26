@@ -15,10 +15,14 @@ repeat earlier experiments when troubleshooting future regressions.
 - **0.1.93 – util-linux fallback chain**  
   We attempted to use `setpriv`, `runuser`, and `su`. Falling back to `su`
   regressed into the PID 1 failure again on certain Supervisor releases.
-- **0.1.94 – `setpriv` / `runuser` only**  
+- **0.1.94 – `setpriv` / `runuser` only**
   The add-on now restricts itself to util-linux helpers that are known to work
   inside the Supervisor environment. If neither helper exists we keep running as
   root and emit a warning instead of invoking the incompatible `su` path.
+- **0.1.95 – Resilient Snapserver supervision**
+  Snapserver occasionally received external `SIGTERM` signals which stopped the
+  entire add-on. The service wrapper now restarts Snapserver automatically
+  unless the Supervisor explicitly requested a shutdown.
 
 ## Future guidance
 

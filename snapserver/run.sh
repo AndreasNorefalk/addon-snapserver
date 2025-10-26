@@ -1,6 +1,8 @@
 #!/command/with-contenv bash
 # shellcheck shell=bash
 
+set -o pipefail
+
 # Lightweight helpers to replace the Bashio dependency that disappeared from
 # the base image.  The add-on configuration provided by the Supervisor is
 # available as JSON in /data/options.json.
@@ -325,25 +327,81 @@ echo "[streaming_client]" >> "${config}"
 initial_volume=$(config_get 'initial_volume' '')
 echo "initial_volume = ${initial_volume}" >> "${config}"
 
-# Start SnapServer and post-process its output so the timestamps are refreshed on
-# every log line.  Using a regular pipeline keeps the shell alive which allows us
-# to capture the exit status cleanly via PIPESTATUS when the daemon stops.
-configure_audio_stack &
-setup_pid=$!
+# Track when the Supervisor has asked us to stop so we do not fight the
+# shutdown sequence by respawning Snapserver.
+shutdown_requested=false
+setup_pid=""
 
-log_info "Starting SnapServer... (log reset)"
+terminate_children() {
+    local sig="$1"
 
-snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
-  BEGIN { print "[" dts "] [LOG RESET] ------------------------" }
-  {
-    cmd="date +\"%Y-%m-%d %H:%M:%S\""
-    cmd | getline t
-    close(cmd)
-    print "[" t "] " $0
-    fflush()
-  }'
+    if [[ -n "${setup_pid}" ]]; then
+        kill -s "${sig}" "${setup_pid}" 2>/dev/null || true
+    fi
 
-snapserver_exit=${PIPESTATUS[0]}
-wait "${setup_pid}" 2>/dev/null || true
+    # Terminate any remaining direct children (Snapserver, awk, etc.).
+    if [[ -r "/proc/$$/task/$$/children" ]]; then
+        local child
+        # shellcheck disable=SC2046 # Intentional word splitting over child PIDs.
+        for child in $(cat "/proc/$$/task/$$/children"); do
+            [[ -n "${child}" ]] || continue
+            kill -s "${sig}" "${child}" 2>/dev/null || true
+        done
+    fi
+}
+
+handle_signal() {
+    local sig="$1"
+
+    shutdown_requested=true
+    log_notice "[Supervisor] Received ${sig}; stopping SnapServer"
+    terminate_children "${sig}"
+}
+
+trap 'handle_signal TERM' TERM
+trap 'handle_signal INT' INT
+trap 'handle_signal QUIT' QUIT
+
+snapserver_exit=0
+
+while true; do
+    configure_audio_stack &
+    setup_pid=$!
+
+    log_info "Starting SnapServer... (log reset)"
+
+    snapserver 2>&1 | awk -v dts="$(date '+%Y-%m-%d %H:%M:%S')" '
+      BEGIN { print "[" dts "] [LOG RESET] ------------------------" }
+      {
+        cmd="date +\"%Y-%m-%d %H:%M:%S\""
+        cmd | getline t
+        close(cmd)
+        print "[" t "] " $0
+        fflush()
+      }'
+
+    snapserver_exit=${PIPESTATUS[0]}
+
+    wait "${setup_pid}" 2>/dev/null || true
+    setup_pid=""
+
+    if [[ "${shutdown_requested}" == true ]]; then
+        break
+    fi
+
+    case "${snapserver_exit}" in
+        0)
+            log_warning "[Snapserver] Process exited cleanly; restarting in 5 seconds"
+            ;;
+        143)
+            log_warning "[Snapserver] Process terminated by SIGTERM without shutdown request; restarting in 5 seconds"
+            ;;
+        *)
+            log_warning "[Snapserver] Process exited with code ${snapserver_exit}; restarting in 5 seconds"
+            ;;
+    esac
+
+    sleep 5
+done
 
 exit "${snapserver_exit}"
