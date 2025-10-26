@@ -74,14 +74,44 @@ config_has_value() {
     fi
 }
 
+canonical_helper_path() {
+    local helper_path="$1"
+    local dir link
+    local -i guard=0
+
+    while [[ -h "${helper_path}" && guard -lt 32 ]]; do
+        link=$(readlink "${helper_path}" 2>/dev/null) || break
+        guard+=1
+        if [[ "${link}" == /* ]]; then
+            helper_path="${link}"
+        else
+            dir=$(dirname "${helper_path}")
+            helper_path="${dir}/${link}"
+        fi
+    done
+
+    if [[ "${helper_path}" != /* ]]; then
+        dir=$(cd "$(dirname "${helper_path}")" 2>/dev/null && pwd -P)
+        if [[ -n "${dir}" ]]; then
+            helper_path="${dir}/$(basename "${helper_path}")"
+        fi
+    fi
+
+    printf '%s' "${helper_path}"
+}
+
 find_system_helper() {
     local name="$1"
     local resolved=""
+    local canonical=""
 
     if resolved=$(command -v "${name}" 2>/dev/null); then
-        if [[ "${resolved}" != /command/* ]]; then
-            printf '%s' "${resolved}"
-            return 0
+        if [[ -x "${resolved}" ]]; then
+            canonical=$(canonical_helper_path "${resolved}")
+            if [[ "${canonical}" != /command/* ]]; then
+                printf '%s' "${canonical}"
+                return 0
+            fi
         fi
     fi
 
@@ -92,7 +122,11 @@ find_system_helper() {
         "/bin/${name}" \
         "/sbin/${name}"; do
         if [[ -x "${candidate}" ]]; then
-            printf '%s' "${candidate}"
+            canonical=$(canonical_helper_path "${candidate}")
+            if [[ "${canonical}" == /command/* ]]; then
+                continue
+            fi
+            printf '%s' "${canonical}"
             return 0
         fi
     done
