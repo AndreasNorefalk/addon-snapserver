@@ -111,17 +111,6 @@ run_as_pulse() {
         return $?
     fi
 
-    if [[ -x /command/s6-setuidgid ]]; then
-        local helper_path
-        helper_path=$(readlink -f /command/s6-setuidgid 2>/dev/null || true)
-        if [[ "${helper_path##*/}" == "s6-overlay-suexec" ]]; then
-            log_warning "[Setup] Ignoring incompatible s6-setuidgid helper provided by s6-overlay (${helper_path})"
-        elif [[ -n "${helper_path}" ]]; then
-            /command/s6-setuidgid pulse:pulse "$@"
-            return $?
-        fi
-    fi
-
     log_warning "[Setup] Unable to drop privileges; running command as root: $1"
     "$@"
 }
