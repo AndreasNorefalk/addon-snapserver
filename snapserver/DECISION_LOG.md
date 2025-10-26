@@ -23,6 +23,11 @@ repeat earlier experiments when troubleshooting future regressions.
   Snapserver occasionally received external `SIGTERM` signals which stopped the
   entire add-on. The service wrapper now restarts Snapserver automatically
   unless the Supervisor explicitly requested a shutdown.
+- **0.1.96 – Ignore `/command` shim symlinks**
+  Some Supervisor releases ship `/usr/bin/setpriv` and friends as symlinks that
+  resolve into `/command/s6-overlay-suexec`, reintroducing the PID 1 crash when
+  dropping privileges. The helper discovery now resolves symlinks and skips any
+  helper that ultimately points into `/command`.
 
 ## Future guidance
 
