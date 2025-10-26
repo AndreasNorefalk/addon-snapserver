@@ -99,10 +99,11 @@ fi
 
 if [[ -x /command/s6-setuidgid ]]; then
     helper_path=$(readlink -f /command/s6-setuidgid 2>/dev/null || true)
-    if [[ "${helper_path}" != "/command/s6-overlay-suexec" ]]; then
+    if [[ "${helper_path##*/}" == "s6-overlay-suexec" ]]; then
+        log_warning "[PA] Ignoring incompatible s6-setuidgid helper provided by s6-overlay (${helper_path})"
+    elif [[ -n "${helper_path}" ]]; then
         exec /command/s6-setuidgid pulse "${cmd[@]}"
     fi
-    log_warning "[PA] Ignoring incompatible s6-setuidgid helper provided by s6-overlay"
 fi
 
 log_warning "[PA] Falling back to running PulseAudio as root"
