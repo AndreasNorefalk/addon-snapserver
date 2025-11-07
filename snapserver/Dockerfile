@@ -87,7 +87,13 @@ RUN \
         /root/.rustup
 
 # Install Snapcast
-RUN apk add --no-cache --repository=http://dl-cdn.alpinelinux.org/alpine/edge/community/ snapcast-server
+RUN \
+    ALPINE_MAIN_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/main" && \
+    ALPINE_COMMUNITY_REPO="${ALPINE_REPO_BASE}/v${ALPINE_VERSION}/community" && \
+    apk add --no-cache \
+        --repository="${ALPINE_MAIN_REPO}" \
+        --repository="${ALPINE_COMMUNITY_REPO}" \
+        snapcast-server
 
 # Install Snapweb
 RUN \

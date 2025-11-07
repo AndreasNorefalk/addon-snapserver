@@ -28,6 +28,11 @@ repeat earlier experiments when troubleshooting future regressions.
   resolve into `/command/s6-overlay-suexec`, reintroducing the PID 1 crash when
   dropping privileges. The helper discovery now resolves symlinks and skips any
   helper that ultimately points into `/command`.
+- **0.1.97 – Use stable Alpine repository for snapcast-server**
+  Changed from using the edge/community repository to the stable v3.22/community
+  repository for snapcast-server installation. Mixing stable and edge packages
+  can cause dependency conflicts and installation failures. The stable repository
+  provides snapcast-server 0.31.0 which is sufficient and more reliable.
 
 ## Future guidance
 
